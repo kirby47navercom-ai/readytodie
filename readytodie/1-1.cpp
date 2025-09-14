@@ -2,7 +2,7 @@
 #include <gl/glew.h>
 #include <gl/freeglut.h>
 #include <gl/freeglut_ext.h> 
-#include "¤·¤µ¤·.h"
+#include ".h" 
 
 int x, y;
 GLvoid drawScene(GLvoid);
