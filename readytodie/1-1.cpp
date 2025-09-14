@@ -2,20 +2,20 @@
 #include <gl/glew.h>
 #include <gl/freeglut.h>
 #include <gl/freeglut_ext.h> 
-#include ".h" 
+#include "ã…‡ã……ã…‡.h" 
 
 int x, y;
 GLvoid drawScene(GLvoid);
 GLvoid Reshape(int w, int h);
 void main(int argc, char** argv)
 {
-	//--- À©µµ¿ì »ı¼ºÇÏ±â
+	//--- ìœˆë„ìš° ìƒì„±í•˜ê¸°
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA);
 	glutInitWindowPosition(100, 100);
 	glutInitWindowSize(500, 500);
 	glutCreateWindow("Example1");
-	//--- GLEW ÃÊ±âÈ­ÇÏ±â
+	//--- GLEW ì´ˆê¸°í™”í•˜ê¸°
 	glewExperimental = GL_TRUE;
 	if (glewInit() != GLEW_OK)
 	{
@@ -26,15 +26,15 @@ void main(int argc, char** argv)
 		std::cout << "GLEW Initialized\n";
 	glutDisplayFunc(drawScene);
 	glutReshapeFunc(Reshape);
-	glutIdleFunc(idleScene);			// ¾ÆÀÌµé Å¸ÀÓ¿¡ È£ÃâÇÏ´ÂÇÔ¼öÀÇÁöÁ¤
-	glutKeyboardFunc(Keyboard);			// Å°º¸µå ÀÔ·Â Äİ¹éÇÔ¼ö
+	glutIdleFunc(idleScene);			// ì•„ì´ë“¤ íƒ€ì„ì— í˜¸ì¶œí•˜ëŠ”í•¨ìˆ˜ì˜ì§€ì •
+	glutKeyboardFunc(Keyboard);			// í‚¤ë³´ë“œ ì…ë ¥ ì½œë°±í•¨ìˆ˜
 	glutMainLoop();
 }
 GLvoid drawScene()
 {
 	glClearColor(0.0f, 0.0f, 1.0f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT);
-	// ±×¸®±â ºÎºĞ ±¸Çö: ±×¸®±â °ü·Ã ºÎºĞÀÌ ¿©±â¿¡Æ÷ÇÔµÈ´Ù.
+	// ê·¸ë¦¬ê¸° ë¶€ë¶„ êµ¬í˜„: ê·¸ë¦¬ê¸° ê´€ë ¨ ë¶€ë¶„ì´ ì—¬ê¸°ì—í¬í•¨ëœë‹¤.
 
 
 	glutSwapBuffers();
@@ -42,22 +42,22 @@ GLvoid drawScene()
 GLvoid Reshape(int w, int h)
 {
 	glViewport(0, 0, w, h);
-	//--- ÇÊ¿äÇÑ Çì´õÆÄÀÏ include
-	//--- À©µµ¿ì Ãâ·ÂÇÏ°í Äİ¹éÇÔ¼ö ¼³Á¤
-   // glut ÃÊ±âÈ­
-   // µğ½ºÇÃ·¹ÀÌ ¸ğµå ¼³Á¤
-   // À©µµ¿ìÀÇ À§Ä¡ ÁöÁ¤
-   // À©µµ¿ìÀÇ Å©±â ÁöÁ¤
-   // À©µµ¿ì »ı¼º (À©µµ¿ì ÀÌ¸§)
-	// glew ÃÊ±âÈ­
-   // Ãâ·Â ÇÔ¼öÀÇ ÁöÁ¤
-   // ´Ù½Ã ±×¸®±â ÇÔ¼ö ÁöÁ¤
-   // ÀÌº¥Æ® Ã³¸® ½ÃÀÛ
-   //--- Äİ¹é ÇÔ¼ö: Ãâ·Â Äİ¹é ÇÔ¼ö
-   // ¹ÙÅÁ»öÀ» ¡®blue¡¯ ·Î ÁöÁ¤
-   // ¼³Á¤µÈ »öÀ¸·Î ÀüÃ¼¸¦Ä¥ÇÏ±â
-   // È­¸é¿¡ Ãâ·ÂÇÏ±â
-   //--- Äİ¹é ÇÔ¼ö: ´Ù½Ã ±×¸®±â Äİ¹é ÇÔ¼ö
+	//--- í•„ìš”í•œ í—¤ë”íŒŒì¼ include
+	//--- ìœˆë„ìš° ì¶œë ¥í•˜ê³  ì½œë°±í•¨ìˆ˜ ì„¤ì •
+   // glut ì´ˆê¸°í™”
+   // ë””ìŠ¤í”Œë ˆì´ ëª¨ë“œ ì„¤ì •
+   // ìœˆë„ìš°ì˜ ìœ„ì¹˜ ì§€ì •
+   // ìœˆë„ìš°ì˜ í¬ê¸° ì§€ì •
+   // ìœˆë„ìš° ìƒì„± (ìœˆë„ìš° ì´ë¦„)
+	// glew ì´ˆê¸°í™”
+   // ì¶œë ¥ í•¨ìˆ˜ì˜ ì§€ì •
+   // ë‹¤ì‹œ ê·¸ë¦¬ê¸° í•¨ìˆ˜ ì§€ì •
+   // ì´ë²¤íŠ¸ ì²˜ë¦¬ ì‹œì‘
+   //--- ì½œë°± í•¨ìˆ˜: ì¶œë ¥ ì½œë°± í•¨ìˆ˜
+   // ë°”íƒ•ìƒ‰ì„ â€˜blueâ€™ ë¡œ ì§€ì •
+   // ì„¤ì •ëœ ìƒ‰ìœ¼ë¡œ ì „ì²´ë¥¼ì¹ í•˜ê¸°
+   // í™”ë©´ì— ì¶œë ¥í•˜ê¸°
+   //--- ì½œë°± í•¨ìˆ˜: ë‹¤ì‹œ ê·¸ë¦¬ê¸° ì½œë°± í•¨ìˆ˜
 }
 void idleScene()
 {

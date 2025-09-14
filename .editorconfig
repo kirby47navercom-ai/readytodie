@@ -2,6 +2,7 @@
 root = true
 
 #인코딩 박스
+[*]
 charset = utf-8
 
 [*.{c++,cc,cpp,cppm,cxx,h,h++,hh,hpp,hxx,inl,ipp,ixx,tlh,tli}]
