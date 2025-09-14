@@ -2,11 +2,19 @@
 #include <gl/glew.h>
 #include <gl/freeglut.h>
 #include <gl/freeglut_ext.h> 
-#include "ㅇㅅㅇ.h" 
+#include "dtd.h" 
 
 int x, y;
 GLvoid drawScene(GLvoid);
 GLvoid Reshape(int w, int h);
+void idleScene();
+void Keyboard(unsigned char key,int x,int y);
+void SpecialKeyboard (int key,int x,int y);
+void Mouse (int button,int state,int x,int y);
+void Motion (int x,int y);
+int glutGetModifiers (); 
+void TimerFunction (int value);
+
 void main(int argc, char** argv)
 {
 	//--- 윈도우 생성하기
@@ -28,6 +36,12 @@ void main(int argc, char** argv)
 	glutReshapeFunc(Reshape);
 	glutIdleFunc(idleScene);			// 아이들 타임에 호출하는함수의지정
 	glutKeyboardFunc(Keyboard);			// 키보드 입력 콜백함수
+	//glutGetModifiers();				// 컨트롤 알트 시프트 확인
+	//glutKeyboardUpFunc(Keyboard);		// 키보드 뗄때 콜백함수
+	glutSpecialFunc (SpecialKeyboard); // 특수키 입력 콜백함수
+	glutMouseFunc (Mouse);				// 마우스 입력 콜백함수 마우스를 누르고 움직일때
+	glutMotionFunc (Motion);			// 마우스 움직임 콜백함수 마우스를 때고 움직일때
+	glutTimerFunc (100,TimerFunction,1); // 타이머 콜백함수
 	glutMainLoop();
 }
 GLvoid drawScene()
@@ -71,4 +85,30 @@ void Keyboard(unsigned char key, int x, int y)
 
 
 	}
+}
+void SpecialKeyboard (int key,int x,int y)
+{
+
+}
+void Mouse (int button,int state,int x,int y)
+{
+
+	/*if(button == GLUT_LEFT_BUTTON && state == GLUT_DOWN)
+		std::cout << “x = “ << x << “ y = “ << y << std::endl;*/
+}
+void Motion (int x,int y)
+{
+	/*if(left_button == true)
+	{
+	}*/
+}
+int glutGetModifiers (){ //컨트롤 알트 시프트 확인
+	return 0;	
+
+}
+void TimerFunction (int value)
+{
+	
+	glutPostRedisplay ();
+	glutTimerFunc (100,TimerFunction,1);
 }
