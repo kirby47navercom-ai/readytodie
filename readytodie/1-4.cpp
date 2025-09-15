@@ -14,6 +14,7 @@ vector<int>_i;
 int _time=0;
 int _stack=0;
 bool b[5]={0,};
+bool dialog[5]={0,};
 bool left_mouse=false;
 random_device rd;
 mt19937 gen(rd());
@@ -110,9 +111,11 @@ void Keyboard(unsigned char key,int x,int y)
 	switch(key) {
 	case '1':
 	b[0]=!b[0];
+	b[1]=false;
 	break;
 	case '2':
 	b[1]=!b[1];
+	b[0]=false;
 	break;
 	case '3':
 	b[2]=!b[2];
@@ -127,16 +130,23 @@ void Keyboard(unsigned char key,int x,int y)
 	memset(b,0,sizeof(b));
 	break;
 	case 'm':
-	for(int i=0;i<arr.size();+i){
-		arr[i].x1=carr[i].x1;
-		arr[i].y1=carr[i].y1;
-		arr[i].x2=carr[i].x2;
-		arr[i].y2=carr[i].y2;
+	for(int i=0;i<arr.size();++i){
+		GLfloat x1 = (arr[i].x1 + arr[i].x2) / 2.0f;
+		GLfloat y1 = (arr[i].y1 + arr[i].y2) / 2.0f;
+		GLfloat x2 = (arr[i].x1 + arr[i].x2) / 2.0f;
+		GLfloat y2 = (arr[i].y1 + arr[i].y2) / 2.0f;
+
+		arr[i].x1+=x2-x1;
+		arr[i].y1+=y2-y1;
+		arr[i].x2+=x2-x1;
+		arr[i].y2+=y2-y1;
+
 	}
 	break;
 	case 'r':
 	arr.clear();
 	carr.clear();
+	memset(dialog,0,sizeof(dialog));
 	break;
 
 	case 'q':
@@ -174,6 +184,29 @@ int glutGetModifiers (){ //컨트롤 알트 시프트 확인
 }
 void TimerFunction (int value)
 {
+	if(b[0]){
+		for(int i=0;i<arr.size();++i){
+			GLfloat x = did(gen)/4;
+			GLfloat y = did(gen)/4;
+			arr[i].x1=-x+(arr[i].x2+arr[i].x1)/2;
+			arr[i].y1=-y+(arr[i].y2+arr[i].y1)/2;
+			arr[i].x2=x+(arr[i].x2+arr[i].x1)/2;
+			arr[i].y2=y+(arr[i].y2+arr[i].y1)/2;
+
+		}
+	}
+
+	if(b[2]){
+		for(int i=0;i<arr.size();++i){
+			GLfloat x = did(gen)/4;
+			GLfloat y = did(gen)/4;
+			arr[i].x1=-x+(arr[i].x2+arr[i].x1)/2;
+			arr[i].y1=-y+(arr[i].y2+arr[i].y1)/2;
+			arr[i].x2=x+(arr[i].x2+arr[i].x1)/2;
+			arr[i].y2=y+(arr[i].y2+arr[i].y1)/2;
+
+		}
+	}
 	if(b[3]){
 		for(int i=0;i<arr.size();++i){
 			arr[i].r=dis(gen);
