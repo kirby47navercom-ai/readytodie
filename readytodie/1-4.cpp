@@ -14,7 +14,14 @@ vector<int>_i;
 int _time=0;
 int _stack=0;
 bool b[5]={0,};
+bool b1[5]={0,};
+bool b2[5]={0,};
+bool b3[5]={0,};
+bool b4[5]={0,};
 bool dialog[5]={0,};
+int snake[5]={0,};
+int snake_[5]={0,};
+int core_[5]={0,1,0,1,0};
 bool left_mouse=false;
 random_device rd;
 mt19937 gen(rd());
@@ -50,6 +57,7 @@ GLfloat tranformy(int y){
 	return ((SIZE - (float)y)/(SIZE/2)) -1.0f;
 }
 
+
 int main(int argc,char** argv)
 {
 
@@ -69,7 +77,7 @@ int main(int argc,char** argv)
 		std::cout << "GLEW Initialized\n";
 
 
-	glutTimerFunc (100,TimerFunction,1);
+	glutTimerFunc (10,TimerFunction,1);
 	glutDisplayFunc(drawScene);	// 출력 함수의 지정
 	glutReshapeFunc(Reshape);	// 다시 그리기 함수 지정
 	glutIdleFunc(idleScene);			// 아이들 타임에 호출하는함수의지정
@@ -110,31 +118,77 @@ void Keyboard(unsigned char key,int x,int y)
 {
 	switch(key) {
 	case '1':
-	b[0]=!b[0];
-	b[1]=false;
+	if(!b[4]){
+		if(b1[0]==false)memset(b1,1,sizeof(b1));
+		else memset(b1,0,sizeof(b1));
+		memset(b2,0,sizeof(b2));
+	}
+	else {
+		b1[star]=true;
+		b2[star]=false;
+		b3[star]=false;
+		b4[star]=false;
+	}
+	
 	break;
 	case '2':
-	b[1]=!b[1];
-	b[0]=false;
+	if(!b[4]){
+		if(b2[0]==false)memset(b2,1,sizeof(b2));
+		else memset(b2,0,sizeof(b2));
+		memset(b1,0,sizeof(b1));
+	}
+	else {
+		b2[star]=true;
+		b1[star]=false;
+		b3[star]=false;
+		b4[star]=false;
+	}
+	
 	break;
 	case '3':
-	b[2]=!b[2];
+	if(!b[4]){
+		if(b3[0]==false)memset(b3,1,sizeof(b3));
+		else memset(b3,0,sizeof(b3));
+	}
+	else {
+		b3[star]=true;
+		b1[star]=false;
+		b2[star]=false;
+		b4[star]=false;
+	}
 	break;
 	case '4':
-	b[3]=!b[3];
+	if(!b[4]){
+		if(b4[0]==false)memset(b4,1,sizeof(b4));
+		else memset(b4,0,sizeof(b4));
+	}
+	else {
+		b4[star]=true;
+		b1[star]=false;
+		b2[star]=false;
+		b3[star]=false;
+	}
 	break;
 	case '5':
-	b[4]=!b[4];
+	{
+		b[4]=!b[4];
+		uniform_int_distribution<int> didi(0,arr.size());
+		star=didi(gen);
+	}
 	break;
 	case 's':
 	memset(b,0,sizeof(b));
+	memset(b1,0,sizeof(b1));
+	memset(b2,0,sizeof(b2));
+	memset(b3,0,sizeof(b3));
+	memset(b4,0,sizeof(b4));
 	break;
 	case 'm':
 	for(int i=0;i<arr.size();++i){
 		GLfloat x1 = (arr[i].x1 + arr[i].x2) / 2.0f;
 		GLfloat y1 = (arr[i].y1 + arr[i].y2) / 2.0f;
-		GLfloat x2 = (arr[i].x1 + arr[i].x2) / 2.0f;
-		GLfloat y2 = (arr[i].y1 + arr[i].y2) / 2.0f;
+		GLfloat x2 = (carr[i].x1 + carr[i].x2) / 2.0f;
+		GLfloat y2 = (carr[i].y1 + carr[i].y2) / 2.0f;
 
 		arr[i].x1+=x2-x1;
 		arr[i].y1+=y2-y1;
@@ -146,7 +200,11 @@ void Keyboard(unsigned char key,int x,int y)
 	case 'r':
 	arr.clear();
 	carr.clear();
+	b[4]=false;
 	memset(dialog,0,sizeof(dialog));
+	memset(snake,0,sizeof(snake));
+	memset(snake_,0,sizeof(snake_));
+	core_[0]={0};core_[1]={1};core_[2]={0};core_[3]={1};core_[4]={0};core_[5]={1};
 	break;
 
 	case 'q':
@@ -184,38 +242,190 @@ int glutGetModifiers (){ //컨트롤 알트 시프트 확인
 }
 void TimerFunction (int value)
 {
-	if(b[0]){
+	if(b[4]&&(b1[star]||b2[star]||b3[star]||b4[star])){
 		for(int i=0;i<arr.size();++i){
+
+			if(_time>100&&i!=star&&b1[star]==true&&b1[i]==false){
+				b1[i]=true;
+				b2[i]=false;
+				b3[i]=false;
+				b4[i]=false;
+				_time=0;
+				break;
+			}
+			if(_time>100&&i!=star&&b2[star]==true&&b2[i]==false){
+				b2[i]=true;
+				b1[i]=false;
+				b3[i]=false;
+				b4[i]=false;
+				_time=0;
+				break;
+			}
+			if(_time>100&&i!=star&&b3[star]==true&&b3[i]==false){
+				b3[i]=true;
+				b1[i]=false;
+				b2[i]=false;
+				b4[i]=false;
+				_time=0;
+				break;
+			}
+			if(_time>100&&i!=star&&b4[star]==true&&b4[i]==false){
+				b4[i]=true;
+				b1[i]=false;
+				b2[i]=false;
+				b3[i]=false;
+				_time=0;
+				break;
+			}
+	
+		}
+		if(_time>100)_time=0;
+		++_time;
+	}
+
+	for(int i=0;i<arr.size();++i){
+		if(b1[i]){
+			if(dialog[i]){
+				if(core_[i]==0){
+					arr[i].x1-=0.005f;
+					arr[i].y1+=0.005f;
+					arr[i].x2-=0.005f;
+					arr[i].y2+=0.005f;
+					if(arr[i].y2>=1.0f||arr[i].x1<=-1.0f)dialog[i]=!dialog[i];
+				}			   
+				else{		   
+					arr[i].x1-=0.005f;
+					arr[i].y1-=0.005f;
+					arr[i].x2-=0.005f;
+					arr[i].y2-=0.005f;
+					if(arr[i].y1<=-1.0f||arr[i].x1<=-1.0f)dialog[i]=!dialog[i];
+				}
+			}
+			else{
+				if(core_[i]==0){
+					arr[i].x1+=0.005f;
+					arr[i].y1-=0.005f;
+					arr[i].x2+=0.005f;
+					arr[i].y2-=0.005f;
+					if(arr[i].y1<=-1.0f||arr[i].x2>=1.0f)dialog[i]=!dialog[i];
+				}
+				else{
+					arr[i].x1+=0.005f;
+					arr[i].y1+=0.005f;
+					arr[i].x2+=0.005f;
+					arr[i].y2+=0.005f;
+					if(arr[i].y2>=1.0f||arr[i].x2>=1.0f)dialog[i]=!dialog[i];
+				}
+			}
+		}
+	}
+	for(int i=0;i<arr.size();++i){
+		if(b2[i]){
+			if(snake[i]){
+				if(snake_[i]<200){
+					if(core_[i]==0){
+						arr[i].y1-=0.005f;
+						arr[i].y2-=0.005f;
+						if(arr[i].y1<=-1.0f){
+							core_[i]=1;
+							snake_[i]=395;
+							snake[i]=false;
+						}
+					} 
+					else{
+						arr[i].y1+=0.005f;
+						arr[i].y2+=0.005f;
+						if(arr[i].y2>=1.0f){
+							core_[i]=0;
+							snake_[i]=395;
+							snake[i]=false;
+						}
+					}
+					++snake_[i]+=5;
+					
+				}
+				else if(snake_[i]>=200){
+					if(core_[i]==0){
+						arr[i].x1-=0.005f;
+						arr[i].x2-=0.005f;
+						if(arr[i].x1<=-1.0f){
+							snake_[i]=200;
+							snake[i]=false;
+						}
+					} 
+					else{
+						arr[i].x1+=0.005f;
+						arr[i].x2+=0.005f;
+						if(arr[i].x2>=1.0f){
+							snake_[i]=200;
+							snake[i]=false;
+						}
+					}
+				}
+			} 
+			else{
+				if(snake_[i]<200||snake_[i]>=400){
+					if(core_[i]==0){
+						arr[i].x1+=0.005f;
+						arr[i].x2+=0.005f;
+						if(arr[i].x2>=1.0f){
+							snake_[i]=0;
+							snake[i]=true;
+						}
+					} 
+					else{
+						arr[i].x1-=0.005f;
+						arr[i].x2-=0.005f;
+						if(arr[i].x1<=-1.0f){
+							snake_[i]=0;
+							snake[i]=true;
+						}
+					}
+				}
+				else if(snake_[i]<400){
+					if(core_[i]==0){
+						arr[i].y1-=0.005f;
+						arr[i].y2-=0.005f;
+						if(arr[i].y1<=-1.0f){
+							core_[i]=1;
+							snake[i]=true;
+							snake_[i]=195;
+						}
+					} 
+					else{
+						arr[i].y1+=0.005f;
+						arr[i].y2+=0.005f;
+						if(arr[i].y2>=1.0f){
+							core_[i]=0;
+							snake[i]=true;
+							snake_[i]=195;
+						}
+					}
+					++snake_[i]+=5;
+				}
+			}
+		}
+		
+	}
+	for(int i=0;i<arr.size();++i){
+		if(b3[i]){
 			GLfloat x = did(gen)/4;
 			GLfloat y = did(gen)/4;
 			arr[i].x1=-x+(arr[i].x2+arr[i].x1)/2;
 			arr[i].y1=-y+(arr[i].y2+arr[i].y1)/2;
 			arr[i].x2=x+(arr[i].x2+arr[i].x1)/2;
 			arr[i].y2=y+(arr[i].y2+arr[i].y1)/2;
-
 		}
 	}
-
-	if(b[2]){
-		for(int i=0;i<arr.size();++i){
-			GLfloat x = did(gen)/4;
-			GLfloat y = did(gen)/4;
-			arr[i].x1=-x+(arr[i].x2+arr[i].x1)/2;
-			arr[i].y1=-y+(arr[i].y2+arr[i].y1)/2;
-			arr[i].x2=x+(arr[i].x2+arr[i].x1)/2;
-			arr[i].y2=y+(arr[i].y2+arr[i].y1)/2;
-
-		}
-	}
-	if(b[3]){
-		for(int i=0;i<arr.size();++i){
+	for(int i=0;i<arr.size();++i){
+		if(b4[i]){
 			arr[i].r=dis(gen);
 			arr[i].g=dis(gen);
 			arr[i].b=dis(gen);
 		}
 	}
 	glutPostRedisplay ();
-	glutTimerFunc (100,TimerFunction,1);
+	glutTimerFunc (10,TimerFunction,1);
 }
 //void MakeMenu ()
 //{
