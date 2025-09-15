@@ -7,13 +7,13 @@
 #include "dtd.h" 
 #define SIZE 600
 int x,y;
-float f,l,o;
+float f=0.1f,l=0.1f,o=0.1f;
 int star=0;
 vector<GLfloat> a,c;
 vector<int>_i;
 int _time=0;
 int _stack=0;
-bool b=false;
+bool b[5]={0,};
 bool left_mouse=false;
 random_device rd;
 mt19937 gen(rd());
@@ -42,6 +42,13 @@ void TimerFunction (int value);
 //void MakeMenu ();
 //void MenuFunction (int button);
 
+GLfloat tranformx(int x){
+	return ((float)x/(SIZE/2))-1.0f;
+}
+GLfloat tranformy(int y){
+	return ((SIZE - (float)y)/(SIZE/2)) -1.0f;
+}
+
 int main(int argc,char** argv)
 {
 
@@ -61,7 +68,7 @@ int main(int argc,char** argv)
 		std::cout << "GLEW Initialized\n";
 
 
-
+	glutTimerFunc (100,TimerFunction,1);
 	glutDisplayFunc(drawScene);	// 출력 함수의 지정
 	glutReshapeFunc(Reshape);	// 다시 그리기 함수 지정
 	glutIdleFunc(idleScene);			// 아이들 타임에 호출하는함수의지정
@@ -96,21 +103,42 @@ void idleScene()
 	glutPostRedisplay();
 }
 void Keyupboard(unsigned char key,int x,int y){
-	b=false;
+	
 }
 void Keyboard(unsigned char key,int x,int y)
 {
 	switch(key) {
-	case 'a':
-	
-		if(arr.size()<30&&!b){
-			GLfloat x=did(gen);
-			GLfloat y=did(gen);
-			arr.push_back({x,y,x+0.2f,y+0.2f,dis(gen),dis(gen),dis(gen)});
-			b=true;
-		}
-	
+	case '1':
+	b[0]=!b[0];
 	break;
+	case '2':
+	b[1]=!b[1];
+	break;
+	case '3':
+	b[2]=!b[2];
+	break;
+	case '4':
+	b[3]=!b[3];
+	break;
+	case '5':
+	b[4]=!b[4];
+	break;
+	case 's':
+	memset(b,0,sizeof(b));
+	break;
+	case 'm':
+	for(int i=0;i<arr.size();+i){
+		arr[i].x1=carr[i].x1;
+		arr[i].y1=carr[i].y1;
+		arr[i].x2=carr[i].x2;
+		arr[i].y2=carr[i].y2;
+	}
+	break;
+	case 'r':
+	arr.clear();
+	carr.clear();
+	break;
+
 	case 'q':
 	exit(0);
 	break;
@@ -123,84 +151,22 @@ void SpecialKeyboard (int key,int x,int y)
 }
 void Mouse (int button,int state,int x,int y)
 {
-	if(button == GLUT_LEFT_BUTTON && state == GLUT_DOWN&&!left_mouse){
-		left_mouse=true;
-		for(int i=0;i<arr.size();++i){
-			if(arr[i].x1<(((float)x/(SIZE/2))-1.0f)&&arr[i].y1<(((SIZE - (float)y)/(SIZE/2)) -1.0f)&&arr[i].x2>(((float)x/(SIZE/2))-1.0f)&&arr[i].y2>(((SIZE - (float)y)/(SIZE/2)) -1.0f)){
-				++star;
-				a.push_back(arr[i].x1);
-				a.push_back(arr[i].x2);
-				c.push_back(arr[i].y1);
-				c.push_back(arr[i].y2);
-				_i.push_back(i);
-
-			}
-
-		}
-
-		if(star>=2){
-
-			sort(a.begin(),a.end());
-			sort(c.begin(),c.end());
-
-			for(int i=arr.size()-1;i>=0;--i){
-
-				if(_i.empty()||star==0)break;
-				if(i==_i.back()){
-					arr.erase(arr.begin()+i);
-					_i.pop_back();
-					//cout<<_i.size()<<endl;
-
-				}
-			}
-			arr.push_back({a.front(),c.front(),a.back(),c.back(),dis(gen),dis(gen),dis(gen)});
-		}
-		a.clear();c.clear();_i.clear();star=0;
-
-	}
-	if(button == GLUT_LEFT_BUTTON && state == GLUT_UP&&left_mouse){
-		left_mouse=false;
-	}
-	if(button == GLUT_RIGHT_BUTTON && state == GLUT_DOWN){
-		for(int i=0;i<arr.size();++i){
-			if(arr[i].x1<(((float)x/(SIZE/2))-1.0f)&&arr[i].y1<(((SIZE - (float)y)/(SIZE/2)) -1.0f)&&arr[i].x2>(((float)x/(SIZE/2))-1.0f)&&arr[i].y2>(((SIZE - (float)y)/(SIZE/2)) -1.0f)){
-				uniform_real_distribution<float> disx(arr[i].x1,arr[i].x2);
-				uniform_real_distribution<float> disy(arr[i].y1,arr[i].y2);
-				for(int j=0;j<2;++j){
-					GLfloat x=disx(gen);
-					GLfloat y=disy(gen);
-					arr.push_back({x,y,x+((arr[i].x2-arr[i].x1)/2),y+((arr[i].y2-arr[i].y1)/2),dis(gen),dis(gen),dis(gen)});
-				}
-				arr.erase(arr.begin()+i);
-				break;
-			}
-
+	if(button == GLUT_LEFT_BUTTON && state == GLUT_DOWN){
+		
+		if(arr.size()<5){
+			arr.push_back({tranformx(x)-0.1f,tranformy(y)-0.1f,tranformx(x)+0.1f,tranformy(y)+0.1f,dis(gen),dis(gen),dis(gen)});
+			carr.push_back(arr.back());
 		}
 
 	}
+	
 	glutPostRedisplay ();
 
 }
 void Motion (int x,int y)
 {
-	if(left_mouse == true)
-	{
-		for(int i=0;i<arr.size();++i){
-			cout<<arr.front().x1<<' '<<arr.front().y1<<" "<<arr.front().x2<<" "<<arr.front().y2;
-			if(arr[i].x1<(((float)x/(SIZE/2))-1.0f)&&arr[i].y1<(((SIZE - (float)y)/(SIZE/2)) -1.0f)&&arr[i].x2>(((float)x/(SIZE/2))-1.0f)&&arr[i].y2>(((SIZE - (float)y)/(SIZE/2)) -1.0f)){
-				GLfloat t1=(arr[i].x2-arr[i].x1)/2;
-				GLfloat t2=(arr[i].y2-arr[i].y1)/2;
-				arr[i].x1=(((float)x/(SIZE/2))-1.0f)-t1;
-				arr[i].y1=(((SIZE - (float)y)/(SIZE/2)) -1.0f)-t2;
-				arr[i].x2=(((float)x/(SIZE/2))-1.0f)+t1;
-				arr[i].y2=(((SIZE - (float)y)/(SIZE/2)) -1.0f)+t2;
-				//cout<<arr[i].x1<<' '<<arr[i].y1<<" "<<arr[i].x2<<" "<<arr[i].y2;
-				break;
-			}
-
-		}
-		glutPostRedisplay ();
-	}
+	
+	
 }
 int glutGetModifiers (){ //컨트롤 알트 시프트 확인
 	return 0;
@@ -208,7 +174,15 @@ int glutGetModifiers (){ //컨트롤 알트 시프트 확인
 }
 void TimerFunction (int value)
 {
+	if(b[3]){
+		for(int i=0;i<arr.size();++i){
+			arr[i].r=dis(gen);
+			arr[i].g=dis(gen);
+			arr[i].b=dis(gen);
+		}
+	}
 	glutPostRedisplay ();
+	glutTimerFunc (100,TimerFunction,1);
 }
 //void MakeMenu ()
 //{
