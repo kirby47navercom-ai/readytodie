@@ -24,6 +24,16 @@ uniform_real_distribution<float> dis(0.0f,1.0f);
 uniform_real_distribution<float> did(-1.0f,1.0f);
 uniform_real_distribution<float> dii(0.1f,0.5f);
 
+struct FPOINT{
+	GLfloat x;
+	GLfloat y;
+};
+struct FRECT{
+	GLfloat left;
+	GLfloat top;
+	GLfloat right;
+	GLfloat bottom;
+};
 struct dtd{
 	GLfloat x1;
 	GLfloat y1;
@@ -34,7 +44,6 @@ struct dtd{
 };
 vector<dtd> arr;
 vector<dtd> carr;
-dtd erase;
 GLvoid drawScene(GLvoid);
 GLvoid Reshape(int w,int h);
 void idleScene();
@@ -54,8 +63,18 @@ GLfloat tranformx(int x){
 GLfloat tranformy(int y){
 	return ((SIZE - (float)y)/(SIZE/2)) -1.0f;
 }
-
-
+void OffsetFRect(FRECT& rect,GLfloat x,GLfloat y){
+	rect.left+=x;
+	rect.right+=x;
+	rect.top+=y;
+	rect.bottom+=y;
+}
+void InflateFRect(FRECT& rect,GLfloat x,GLfloat y){
+	rect.left-=x;
+	rect.right+=x;
+	rect.top+=y;
+	rect.bottom-=y;
+}
 int main(int argc,char** argv)
 {
 
@@ -130,13 +149,12 @@ void Keyboard(unsigned char key,int x,int y)
 	break;
 	case 'r':
 	arr.clear();
-	for(int i=0;i<5;++i){
+	for(int i=0;i<10;++i){
 		GLfloat x=did(gen);
 		GLfloat y=did(gen);
 		GLfloat sixex=dii(gen);
 		arr.push_back({x,y,x+sixex,y+sixex,dis(gen),dis(gen),dis(gen)});
 	}
-	erase = dtd{0,0,0.2f,0.2f,0,0,0};
 	break;
 	case 'q':
 	exit(0);
@@ -151,8 +169,55 @@ void Mouse (int button,int state,int x,int y)
 {
 	if(button == GLUT_LEFT_BUTTON && state == GLUT_DOWN){
 		for(int i=0;i<arr.size();++i){
-			if(tranformx(x)>=arr[i].x1 && tranformx(x)<=arr[i].x2 && tranformy(y)>=arr[i].y1 && tranformy(y)<=arr[i].y2&&arr[i].num==0){
-				arr[i].num=option;
+			if(tranformx(x)>=arr[i].x1 && tranformx(x)<=arr[i].x2 && tranformy(y)>=arr[i].y1 && tranformy(y)<=arr[i].y2&&arr[i].num==0&&option!=0){
+				GLfloat x_=(arr[i].x2-arr[i].x1)/4.0f;
+				GLfloat y_=(arr[i].y2-arr[i].y1)/4.0f;
+				GLfloat cx=(arr[i].x2+arr[i].x1)/4.0f;
+				GLfloat cy=(arr[i].y2+arr[i].y1)/4.0f;
+				FPOINT lx = {arr[i].x1,(arr[i].y1+arr[i].y2)/2.0f};
+				FPOINT rx = {arr[i].x2,(arr[i].y1+arr[i].y2)/2.0f};
+				FPOINT ty = {(arr[i].x1+arr[i].x2)/2.0f,arr[i].y2};
+				FPOINT by = {(arr[i].x1+arr[i].x2)/2.0f,arr[i].y1};
+				switch(option)
+				{
+				case 1:
+				arr.push_back({lx.x-x_,lx.y-y_,lx.x+x_,lx.y+y_,arr[i].r,arr[i].g,arr[i].b,1});
+				arr.push_back({ty.x-x_,ty.y-y_,ty.x+x_,ty.y+y_,arr[i].r,arr[i].g,arr[i].b,2});
+				arr.push_back({rx.x-x_,rx.y-y_,rx.x+x_,rx.y+y_,arr[i].r,arr[i].g,arr[i].b,3});
+				arr.push_back({by.x-x_,by.y-y_,by.x+x_,by.y+y_,arr[i].r,arr[i].g,arr[i].b,4});
+				break;
+
+				case 2:
+				arr.push_back({arr[i].x1-x_,arr[i].y2-y_,arr[i].x1+x_,arr[i].y2+y_,arr[i].r,arr[i].g,arr[i].b,5});
+				arr.push_back({arr[i].x2-x_,arr[i].y2-y_,arr[i].x2+x_,arr[i].y2+y_,arr[i].r,arr[i].g,arr[i].b,6});
+				arr.push_back({arr[i].x1-x_,arr[i].y1-y_,arr[i].x1+x_,arr[i].y1+y_,arr[i].r,arr[i].g,arr[i].b,7});
+				arr.push_back({arr[i].x2-x_,arr[i].y1-y_,arr[i].x2+x_,arr[i].y1+y_,arr[i].r,arr[i].g,arr[i].b,8});
+				break;
+
+				case 3:
+				{
+					uniform_int_distribution<int> didi(1,8);
+					int a=didi(gen);
+					arr.push_back({arr[i].x1-x_,arr[i].y2-y_,arr[i].x1+x_,arr[i].y2+y_,arr[i].r,arr[i].g,arr[i].b,a});
+					arr.push_back({arr[i].x2-x_,arr[i].y2-y_,arr[i].x2+x_,arr[i].y2+y_,arr[i].r,arr[i].g,arr[i].b,a});
+					arr.push_back({arr[i].x1-x_,arr[i].y1-y_,arr[i].x1+x_,arr[i].y1+y_,arr[i].r,arr[i].g,arr[i].b,a});
+					arr.push_back({arr[i].x2-x_,arr[i].y1-y_,arr[i].x2+x_,arr[i].y1+y_,arr[i].r,arr[i].g,arr[i].b,a});
+				}
+				break;
+
+				case 4:
+				arr.push_back({lx.x-x_,lx.y-y_,lx.x+x_,lx.y+y_,arr[i].r,arr[i].g,arr[i].b,1});
+				arr.push_back({ty.x-x_,ty.y-y_,ty.x+x_,ty.y+y_,arr[i].r,arr[i].g,arr[i].b,2});
+				arr.push_back({rx.x-x_,rx.y-y_,rx.x+x_,rx.y+y_,arr[i].r,arr[i].g,arr[i].b,3});
+				arr.push_back({by.x-x_,by.y-y_,by.x+x_,by.y+y_,arr[i].r,arr[i].g,arr[i].b,4});
+				arr.push_back({arr[i].x1-x_,arr[i].y2-y_,arr[i].x1+x_,arr[i].y2+y_,arr[i].r,arr[i].g,arr[i].b,5});
+				arr.push_back({arr[i].x2-x_,arr[i].y2-y_,arr[i].x2+x_,arr[i].y2+y_,arr[i].r,arr[i].g,arr[i].b,6});
+				arr.push_back({arr[i].x1-x_,arr[i].y1-y_,arr[i].x1+x_,arr[i].y1+y_,arr[i].r,arr[i].g,arr[i].b,7});
+				arr.push_back({arr[i].x2-x_,arr[i].y1-y_,arr[i].x2+x_,arr[i].y1+y_,arr[i].r,arr[i].g,arr[i].b,8});
+				break;
+				}
+				arr.erase(arr.begin()+i);
+				break;
 			}
 		}
 
@@ -166,7 +231,7 @@ void Motion (int x,int y)
 
 		
 	}
-
+	cout<<"x:"<<tranformx(x)<<" y:"<<tranformy(y)<<endl;
 }
 int glutGetModifiers (){ //컨트롤 알트 시프트 확인
 	return 0;
@@ -174,7 +239,117 @@ int glutGetModifiers (){ //컨트롤 알트 시프트 확인
 }
 void TimerFunction (int value)
 {
-	
+	for(int i=0;i<arr.size();++i){
+		switch(arr[i].num)
+		{
+		case 1:
+		{	
+			FRECT rect = {arr[i].x1,arr[i].y2,arr[i].x2,arr[i].y1};
+			OffsetFRect(rect,-0.01f,0.0f);
+			InflateFRect(rect,-0.001f,-0.001f);
+			arr[i].x1=rect.left;
+			arr[i].x2=rect.right;
+			arr[i].y1=rect.bottom;
+			arr[i].y2=rect.top;
+			if(arr[i].x2-arr[i].x1<=0.f)
+				arr.erase(arr.begin()+i);
+		}
+		break;
+		case 2:
+		{
+			FRECT rect = {arr[i].x1,arr[i].y2,arr[i].x2,arr[i].y1};
+			OffsetFRect(rect,0.0f,0.01f);
+			InflateFRect(rect,-0.001f,-0.001f);
+			arr[i].x1=rect.left;
+			arr[i].x2=rect.right;
+			arr[i].y1=rect.bottom;
+			arr[i].y2=rect.top;
+			if(arr[i].y2-arr[i].y1<=0.f)
+				arr.erase(arr.begin()+i);
+		}
+		break;
+		case 3:
+		{
+			FRECT rect = {arr[i].x1,arr[i].y2,arr[i].x2,arr[i].y1};
+			OffsetFRect(rect,0.01f,0.0f);
+			InflateFRect(rect,-0.001f,-0.001f);
+			arr[i].x1=rect.left;
+			arr[i].x2=rect.right;
+			arr[i].y1=rect.bottom;
+			arr[i].y2=rect.top;
+			if(arr[i].x2-arr[i].x1<=0.f)
+				arr.erase(arr.begin()+i);
+		}
+		break;
+		case 4:
+		{
+			FRECT rect = {arr[i].x1,arr[i].y2,arr[i].x2,arr[i].y1};
+			OffsetFRect(rect,0.0f,-0.01f);
+			InflateFRect(rect,-0.001f,-0.001f);
+			arr[i].x1=rect.left;
+			arr[i].x2=rect.right;
+			arr[i].y1=rect.bottom;
+			arr[i].y2=rect.top;
+			if(arr[i].y2-arr[i].y1<=0.f)
+				arr.erase(arr.begin()+i);
+		}
+		break;
+		case 5:
+		{
+			FRECT rect = {arr[i].x1,arr[i].y2,arr[i].x2,arr[i].y1};
+			OffsetFRect(rect,-0.01f,0.01f);
+			InflateFRect(rect,-0.001f,-0.001f);
+			arr[i].x1=rect.left;
+			arr[i].x2=rect.right;
+			arr[i].y1=rect.bottom;
+			arr[i].y2=rect.top;
+			if(arr[i].x2-arr[i].x1<=0.f||arr[i].y2-arr[i].y1<=0.f)
+				arr.erase(arr.begin()+i);
+		}
+		break;
+		case 6:
+		{
+			FRECT rect = {arr[i].x1,arr[i].y2,arr[i].x2,arr[i].y1};
+			OffsetFRect(rect,0.01f,0.01f);
+			InflateFRect(rect,-0.001f,-0.001f);
+			arr[i].x1=rect.left;
+			arr[i].x2=rect.right;
+			arr[i].y1=rect.bottom;
+			arr[i].y2=rect.top;
+			if(arr[i].x2-arr[i].x1<=0.f||arr[i].y2-arr[i].y1<=0.f)
+				arr.erase(arr.begin()+i);
+		}
+		break;
+		case 7:
+		{
+			FRECT rect = {arr[i].x1,arr[i].y2,arr[i].x2,arr[i].y1};
+			OffsetFRect(rect,-0.01f,-0.01f);
+			InflateFRect(rect,-0.001f,-0.001f);
+			arr[i].x1=rect.left;
+			arr[i].x2=rect.right;
+			arr[i].y1=rect.bottom;
+			arr[i].y2=rect.top;
+			if(arr[i].x2-arr[i].x1<=0.f||arr[i].y2-arr[i].y1<=0.f)
+				arr.erase(arr.begin()+i);
+		}
+		break;
+		case 8:
+		{
+			FRECT rect = {arr[i].x1,arr[i].y2,arr[i].x2,arr[i].y1};
+			OffsetFRect(rect,0.01f,-0.01f);
+			InflateFRect(rect,-0.001f,-0.001f);
+			arr[i].x1=rect.left;
+			arr[i].x2=rect.right;
+			arr[i].y1=rect.bottom;
+			arr[i].y2=rect.top;
+			if(arr[i].x2-arr[i].x1<=0.f||arr[i].y2-arr[i].y1<=0.f)
+				arr.erase(arr.begin()+i);
+		}
+		break;
+		default:
+		break;
+		}
+	}
 
 
 	glutPostRedisplay ();
