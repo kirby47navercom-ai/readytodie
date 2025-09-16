@@ -13,15 +13,7 @@ vector<GLfloat> a,c;
 vector<int>_i;
 int _time=0;
 int _stack=0;
-bool b[5]={0,};
-bool b1[5]={0,};
-bool b2[5]={0,};
-bool b3[5]={0,};
-bool b4[5]={0,};
-int dialog[5]={0,};
-int snake[5]={0,};
-int snake_[5]={0,};
-int core_[5]={0,1,0,1,0};
+int option=0;
 //glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);
 //glPolygonMode(GL_FRONT_AND_BACK,GL_Line);
 //glRectf(-0.5f,-0.5f,0.5f,0.5f);
@@ -38,6 +30,7 @@ struct dtd{
 	GLfloat x2;
 	GLfloat y2;
 	float r,g,b;
+	int num=0;
 };
 vector<dtd> arr;
 vector<dtd> carr;
@@ -124,12 +117,16 @@ void Keyboard(unsigned char key,int x,int y)
 {
 	switch(key) {
 	case'1':
+	option=1;
 	break;
 	case'2':
+	option=2;
 	break;
 	case'3':
+	option=3;
 	break;
 	case'4':
+	option=4;
 	break;
 	case 'r':
 	arr.clear();
@@ -153,28 +150,12 @@ void SpecialKeyboard (int key,int x,int y)
 void Mouse (int button,int state,int x,int y)
 {
 	if(button == GLUT_LEFT_BUTTON && state == GLUT_DOWN){
-		left_mouse=true;
-		GLfloat a=(erase.x2-erase.x1)/2.0f;
-		GLfloat b=(erase.y2-erase.y1)/2.0f;
-		erase.x1=tranformx(x)-a;
-		erase.y1=tranformy(y)-b;
-		erase.x2=tranformx(x)+a;
-		erase.y2=tranformy(y)+b;
+		for(int i=0;i<arr.size();++i){
+			if(tranformx(x)>=arr[i].x1 && tranformx(x)<=arr[i].x2 && tranformy(y)>=arr[i].y1 && tranformy(y)<=arr[i].y2&&arr[i].num==0){
+				arr[i].num=option;
+			}
+		}
 
-	}
-	if(button == GLUT_LEFT_BUTTON && state == GLUT_UP&&left_mouse){
-		left_mouse=false;
-		erase.r=0;
-		erase.g=0;
-		erase.b=0;
-	}
-	if(button == GLUT_RIGHT_BUTTON && state == GLUT_DOWN&&star>0){
-		--star;
-		arr.push_back({tranformx(x)-0.05f,tranformy(y)-0.05f,tranformx(x)+0.05f,tranformy(y)+0.05f,dis(gen),dis(gen),dis(gen)});
-		erase.x1+=0.01f;
-		erase.y1+=0.01f;
-		erase.x2-=0.01f;
-		erase.y2-=0.01f;
 	}
 	glutPostRedisplay ();
 
@@ -183,27 +164,7 @@ void Motion (int x,int y)
 {
 	if(left_mouse){
 
-		GLfloat a=(erase.x2-erase.x1)/2.0f;
-		GLfloat b=(erase.y2-erase.y1)/2.0f;
-		erase.x1=tranformx(x)-a;
-		erase.y1=tranformy(y)-b;
-		erase.x2=tranformx(x)+a;
-		erase.y2=tranformy(y)+b;
-
-		for(int i=0;i<arr.size();++i){
-			if(arr[i].x1<erase.x2&&arr[i].y1<erase.y2&&arr[i].x2>erase.x1&&arr[i].y2>erase.y1){
-				erase.r=arr[i].r;
-				erase.g=arr[i].g;
-				erase.b=arr[i].b;
-				erase.x1-=0.01f;
-				erase.y1-=0.01f;
-				erase.x2+=0.01f;
-				erase.y2+=0.01f;
-				++star;
-				arr.erase(arr.begin()+i);
-				--i;
-			}
-		}
+		
 	}
 
 }
@@ -213,6 +174,8 @@ int glutGetModifiers (){ //컨트롤 알트 시프트 확인
 }
 void TimerFunction (int value)
 {
+	
+
 
 	glutPostRedisplay ();
 	glutTimerFunc (10,TimerFunction,1);
