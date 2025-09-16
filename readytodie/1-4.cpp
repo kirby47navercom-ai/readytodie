@@ -18,10 +18,13 @@ bool b1[5]={0,};
 bool b2[5]={0,};
 bool b3[5]={0,};
 bool b4[5]={0,};
-bool dialog[5]={0,};
+int dialog[5]={0,};
 int snake[5]={0,};
 int snake_[5]={0,};
 int core_[5]={0,1,0,1,0};
+//glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);
+//glPolygonMode(GL_FRONT_AND_BACK,GL_Line);
+//glRectf(-0.5f,-0.5f,0.5f,0.5f);
 bool left_mouse=false;
 random_device rd;
 mt19937 gen(rd());
@@ -285,38 +288,36 @@ void TimerFunction (int value)
 
 	for(int i=0;i<arr.size();++i){
 		if(b1[i]){
-			if(dialog[i]){
-				if(core_[i]==0){
+				if(dialog[i]==0){
 					arr[i].x1-=0.005f;
 					arr[i].y1+=0.005f;
 					arr[i].x2-=0.005f;
 					arr[i].y2+=0.005f;
-					if(arr[i].y2>=1.0f||arr[i].x1<=-1.0f)dialog[i]=!dialog[i];
+					if(arr[i].y2>=1.0f||arr[i].x1<=-1.0f)dialog[i]=1;
 				}			   
-				else{		   
+				else if(dialog[i]==1){
 					arr[i].x1-=0.005f;
 					arr[i].y1-=0.005f;
 					arr[i].x2-=0.005f;
 					arr[i].y2-=0.005f;
-					if(arr[i].y1<=-1.0f||arr[i].x1<=-1.0f)dialog[i]=!dialog[i];
+					if(arr[i].y1<=-1.0f||arr[i].x1<=-1.0f)dialog[i]=2;
 				}
-			}
-			else{
-				if(core_[i]==0){
+			
+				else if(dialog[i]==2){
 					arr[i].x1+=0.005f;
 					arr[i].y1-=0.005f;
 					arr[i].x2+=0.005f;
 					arr[i].y2-=0.005f;
-					if(arr[i].y1<=-1.0f||arr[i].x2>=1.0f)dialog[i]=!dialog[i];
+					if(arr[i].y1<=-1.0f||arr[i].x2>=1.0f)dialog[i]=3;
 				}
-				else{
+				else if(dialog[i]==3){
 					arr[i].x1+=0.005f;
 					arr[i].y1+=0.005f;
 					arr[i].x2+=0.005f;
 					arr[i].y2+=0.005f;
-					if(arr[i].y2>=1.0f||arr[i].x2>=1.0f)dialog[i]=!dialog[i];
+					if(arr[i].y2>=1.0f||arr[i].x2>=1.0f)dialog[i]=0;
 				}
-			}
+			
 		}
 	}
 	for(int i=0;i<arr.size();++i){
