@@ -20,8 +20,8 @@ int check=0;
 bool left_mouse=false;
 random_device rd;
 mt19937 gen(rd());
-uniform_int_distribution<int> dis(0,1000);
-uniform_int_distribution<int> did(-1000,1000);
+uniform_int_distribution<int> dis(0,SIZE/2);
+uniform_int_distribution<int> did(-SIZE/2,SIZE/2);
 
 struct FPOINT{
 	GLfloat x;
@@ -55,10 +55,10 @@ void TimerFunction (int value);
 //void MenuFunction (int button);
 
 GLfloat tranformx(int x){
-	return (((float)x/(SIZE/2))-1.0f)*1000;
+	return x - (SIZE / 2);
 }
 GLfloat tranformy(int y){
-	return (((SIZE - (float)y)/(SIZE/2)) -1.0f)*1000;
+	return (SIZE / 2) - y;
 }
 void OffsetFRect(FRECT& rect,GLfloat x,GLfloat y){
 	rect.left+=x;
@@ -93,7 +93,7 @@ bool IntersectFRect(FRECT &check,const FRECT& rect1,const FRECT& rect2){
 	}
 }
 void GLRectf(RECT rect){
-	FRECT frect= {static_cast<GLfloat>(rect.left),static_cast<GLfloat>(rect.top),static_cast<GLfloat>(rect.right),static_cast<GLfloat>(rect.bottom)};
+	FRECT frect= {static_cast<GLfloat>(rect.left)/(SIZE/2),static_cast<GLfloat>(rect.top)/(SIZE/2),static_cast<GLfloat>(rect.right)/(SIZE/2),static_cast<GLfloat>(rect.bottom)/(SIZE/2)};
 	glRectf(frect.left,frect.top,frect.right,frect.bottom);
 }
 vector<dtd> art;
