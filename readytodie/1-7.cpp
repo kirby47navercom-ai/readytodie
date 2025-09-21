@@ -190,6 +190,7 @@ void Keyboard(unsigned char key,int x,int y)
 	case '7':
 	case '8':
 	case '9':
+	if(arr.size()>0)
 		arr[key-'0'].b_=true;
 	break;
 	case 'r':
@@ -271,10 +272,7 @@ void TimerFunction (int value)
 	}
 	for(int i=0;i<arr.size();++i){
 		if(arr[i].b_){
-			arr[i].rect.left   += (art[i].rect.left   - arr[i].rect.left)   * 0.05f;
-			arr[i].rect.top    += (art[i].rect.top    - arr[i].rect.top)    * 0.05f;
-			arr[i].rect.right  += (art[i].rect.right  - arr[i].rect.right)  * 0.05f;
-			arr[i].rect.bottom += (art[i].rect.bottom - arr[i].rect.bottom) * 0.05f;
+			OffsetFRect(arr[i].rect,(art[i].rect.left   - arr[i].rect.left)   * 0.05f,(art[i].rect.top    - arr[i].rect.top)    * 0.05f);
 		}	
 	}
 	glutPostRedisplay ();
