@@ -272,7 +272,7 @@ void TimerFunction (int value)
 	}
 	for(int i=0;i<arr.size();++i){
 		if(arr[i].b_){
-			OffsetFRect(arr[i].rect,(art[i].rect.left   - arr[i].rect.left)   * 0.05f,(art[i].rect.top    - arr[i].rect.top)    * 0.05f);
+			OffsetFRect(arr[i].rect,(art[i].rect.left   - arr[i].rect.left)   * 0.05f,(art[i].rect.top    - arr[i].rect.top)    * 0.05f);//선형변환
 		}	
 	}
 	glutPostRedisplay ();
