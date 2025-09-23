@@ -2,6 +2,7 @@
 #version 330 core
 
 
+/*
 //--- fragment shader: fragment.glsl 파일에 저장
 #version 330 core
 //--- out_Color: 버텍스 세이더에서 입력받는 색상 값
@@ -12,6 +13,7 @@ void main(void)
 {
 FragColor = vec4 (out_Color, 1.0);
 }
+*/
 
 /*
 //--- in_Position: attribute index 0
@@ -38,12 +40,8 @@ FragColor = vec4 (outColor, 1.0);
 
 
 
-
-/*
-#version 330 core
 out vec4 color;
 void main ()
 {
 	color = vec4 (1.0, 0.0, 0.0, 1.0); //빨강색으로 색상 고정
 }
-*/

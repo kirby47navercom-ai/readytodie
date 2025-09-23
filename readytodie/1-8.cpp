@@ -17,15 +17,26 @@ int time_count=0;
 int stack_count=0;
 int check=0;
 GLuint VAO,VBO;
-GLchar *vertexSource,*fragmentSource; //--- 소스코드 저장 변수
-GLuint vertexShader,fragmentShader; //--- 세이더 객체
-GLuint shaderProgramID; //--- 셰이더 프로그램
+GLchar *vertexSource,*fragmentSource; //--- 소스코드 저장 변수 //--- 세이더 객체
 const float vertexData[] =
 {
 	0.5,1.0,0.0,1.0,0.0,0.0,
 	0.0,0.0,0.0,0.0,1.0,0.0,
 	1.0,0.0,0.0,0.0,0.0,1.0
 };
+const float vertexPosition[] =
+{
+	0.5,1.0,0.0,
+	0.0,0.0,0.0,
+	1.0,0.0,0.0
+};
+const float vertexColor[] =
+{
+	1.0,0.0,0.0,
+	0.0,1.0,0.0,
+	0.0,0.0,1.0
+};
+
 const GLfloat triShape[3][3] = { //--- 삼각형 위치 값
 	{-0.5,-0.5,0.0},{0.5,-0.5,0.0},{0.0,0.5,0.0}};
 const GLfloat colors[3][3] = { //--- 삼각형 꼭지점 색상
@@ -181,16 +192,17 @@ GLvoid drawScene () //--- 콜백 함수: 그리기 콜백 함수
 	glClearColor(rColor,gColor,bColor,1.0f);
 	glClear(GL_COLOR_BUFFER_BIT);
 	//--- uniform 변수의 인덱스 값
-	int vColorLocation = glGetUniformLocation (shaderProgramID,"vColor");
+	//int vColorLocation = glGetUniformLocation (shaderProgramID,"vColor");
 	//--- uniform 변수가 있는 프로그램 활성화:
 	glUseProgram (shaderProgramID);
 	//--- 사용할 VAO 불러오기
-	glBindVertexArray(vao);
+	//glBindVertexArray(vao);
 	//--- uniform 변수의 위치에 변수의 값 설정
-	glUniform4f (vColorLocation,1.0f,0.0f,0.0f,1.0f);
+	//glUniform4f (vColorLocation,1.0f,0.0f,0.0f,1.0f);
 
 	//--- 필요한 드로잉 함수 호출
-	glBindVertexArray(VAO);
+	//glBindVertexArray(VAO);
+	glPointSize(10.0);
 	glDrawArrays (GL_TRIANGLES,0,3); //--- 렌더링하기: 0번 인덱스에서 1개의 버텍스를 사용하여 점 그리기
 	glutSwapBuffers(); // 화면에 출력하기
 }
@@ -376,69 +388,43 @@ GLuint make_shaderProgram()
 
 void InitBuffer ()
 {
-	glGenVertexArrays (1,&vao); //--- VAO 를 지정하고 할당하기
-	glBindVertexArray (vao); //--- VAO를 바인드하기
-	glGenBuffers (2,vbo); //--- 2개의 VBO를 지정하고 할당하기
-	//--- 1번째 VBO를 활성화하여 바인드하고, 버텍스 속성 (좌표값)을 저장
-	glBindBuffer(GL_ARRAY_BUFFER,vbo[0]);
-	//--- 변수 diamond 에서 버텍스 데이터 값을 버퍼에 복사한다.
-	//--- triShape 배열의 사이즈: 9 * float
-	glBufferData(GL_ARRAY_BUFFER,9 * sizeof(GLfloat),triShape,GL_STATIC_DRAW);
-	//--- 좌표값을 attribute 인덱스 0번에 명시한다: 버텍스 당 3* float
-	glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,0,0);
-	//--- attribute 인덱스 0번을 사용가능하게 함
-	glEnableVertexAttribArray(0);
-	//--- 2번째 VBO를 활성화 하여 바인드 하고, 버텍스 속성 (색상)을 저장
-	glBindBuffer(GL_ARRAY_BUFFER,vbo[1]);
-	//--- 변수 colors에서 버텍스 색상을 복사한다.
-	//--- colors 배열의 사이즈: 9 *float
-	glBufferData(GL_ARRAY_BUFFER,9 * sizeof(GLfloat),colors,GL_STATIC_DRAW);
-	//--- 색상값을 attribute 인덱스 1번에 명시한다: 버텍스 당 3*float
-	glVertexAttribPointer(1,3,GL_FLOAT,GL_FALSE,0,0);
-	//--- attribute 인덱스 1번을 사용 가능하게 함.
-	glEnableVertexAttribArray(1);
-}
-void make_vertexShaders ()
-{
-	vertexSource = filetobuf ("vertex.glsl");
-	//--- 버텍스 세이더 객체 만들기
-	vertexShader = glCreateShader (GL_VERTEX_SHADER);
-	//--- 세이더 코드를 세이더 객체에 넣기
-	glShaderSource(vertexShader,1,(const GLchar**)&vertexSource,0);
-	//--- 버텍스 세이더 컴파일하기
-	glCompileShader(vertexShader);
-	//--- 컴파일이 제대로 되지 않은 경우: 에러 체크
-	GLint result;
-	GLchar errorLog[512];
-	glGetShaderiv (vertexShader,GL_COMPILE_STATUS,&result);
-	if (!result)
-	{
-		glGetShaderInfoLog (vertexShader,512,NULL,errorLog);
-		cerr << "ERROR: vertex shader 컴파일 실패\n" << errorLog << endl;
-		return;
-	}
+	//--- VAO 객체 생성 및 바인딩
+	glGenVertexArrays (1,&VAO);
+	glBindVertexArray (VAO);
+	//--- vertex data 저장을 위한 VBO 생성 및 바인딩.
+	glGenBuffers (1,&VBO);
+	glBindBuffer (GL_ARRAY_BUFFER,VBO);
+	//--- vertex data 데이터 입력.
+	glBufferData (GL_ARRAY_BUFFER,sizeof (vertexData),vertexData,GL_STATIC_DRAW);
+	//--- 위치 속성: 속성 위치 0
+	glVertexAttribPointer (0,3,GL_FLOAT,GL_FALSE,6 * sizeof(float),(void*)0);
+	glEnableVertexAttribArray (0);
+	//--- 색상 속성: 속성 위치 1
+	glVertexAttribPointer (1,3,GL_FLOAT,GL_FALSE,6 * sizeof(float),(void*)(3* sizeof(float)));
+	glEnableVertexAttribArray (1);
+
 }
 //--- 프래그먼트 세이더 객체 만들기
-void make_fragmentShaders ()
-{
-	fragmentSource = filetobuf ("fragment.glsl");
-	//--- 프래그먼트 세이더 객체 만들기
-	fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-	//--- 세이더 코드를 세이더 객체에 넣기
-	glShaderSource(fragmentShader,1,(const GLchar**)&fragmentSource,0);
-	//--- 프래그먼트 세이더 컴파일
-	glCompileShader(fragmentShader);
-	//--- 컴파일이 제대로 되지 않은 경우: 컴파일 에러 체크
-	GLint result;
-	GLchar errorLog[512];
-	glGetShaderiv (fragmentShader,GL_COMPILE_STATUS,&result);
-	if(!result)
-	{
-		glGetShaderInfoLog (fragmentShader,512,NULL,errorLog);
-		cerr << "ERROR: fragment shader 컴파일 실패\n" << errorLog << endl;
-		return;
-	}
-}
+//void make_fragmentShaders ()
+//{
+//	fragmentSource = filetobuf ("fragment.glsl");
+//	//--- 프래그먼트 세이더 객체 만들기
+//	fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
+//	//--- 세이더 코드를 세이더 객체에 넣기
+//	glShaderSource(fragmentShader,1,(const GLchar**)&fragmentSource,0);
+//	//--- 프래그먼트 세이더 컴파일
+//	glCompileShader(fragmentShader);
+//	//--- 컴파일이 제대로 되지 않은 경우: 컴파일 에러 체크
+//	GLint result;
+//	GLchar errorLog[512];
+//	glGetShaderiv (fragmentShader,GL_COMPILE_STATUS,&result);
+//	if(!result)
+//	{
+//		glGetShaderInfoLog (fragmentShader,512,NULL,errorLog);
+//		cerr << "ERROR: fragment shader 컴파일 실패\n" << errorLog << endl;
+//		return;
+//	}
+//}
 
 //void MakeMenu ()
 //{

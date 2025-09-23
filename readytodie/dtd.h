@@ -14,5 +14,8 @@
 #include <random>
 #include <sstream>
 #include <map>
+#include <stdio.h>
+#include <stdlib.h>
+#include <set>
 #include <string_view>
 using namespace std;
