@@ -24,7 +24,7 @@ const float vertexData[] =
 	0.5,1.0,0.0,
 	1.0,0.0,0.0,
 	0.0,0.0,0.0,
-	
+
 	0.0,1.0,0.0,
 	1.0,0.0,0.0,
 	0.0,0.0,1.0
@@ -140,12 +140,12 @@ bool PointToLine(float mx,float my,float p1x,float p1y,float p2x,float p2y,float
 	float dot = mouseVecX * lineVecX + mouseVecY * lineVecY;
 	float t = dot / lenSq;
 
-	
+
 	if(t < 0 || t > 1) {
 		return false;
 	}
 
-	
+
 	float numerator = abs(lineVecX * mouseVecY - lineVecY * mouseVecX);
 	float distance = numerator / sqrt(lenSq);
 
@@ -265,7 +265,7 @@ GLvoid drawScene () //--- 콜백 함수: 그리기 콜백 함수
 	{
 		glPointSize(10.0f);
 		glDrawArrays(GL_POINTS,offset,pointCount);
-		offset += pointCount; 
+		offset += pointCount;
 	}
 	// 2. 선 그리기
 	if(lineCount > 0)
@@ -273,7 +273,7 @@ GLvoid drawScene () //--- 콜백 함수: 그리기 콜백 함수
 		glLineWidth(10.0f);
 		glDrawArrays(GL_LINES,offset,lineCount);
 		glLineWidth(1.0f);
-		offset += lineCount; 
+		offset += lineCount;
 	}
 	// 3. 삼각형 그리기
 	if(triangleCount > 0)
@@ -335,7 +335,7 @@ void Keyboard(unsigned char key,int x,int y)
 	case 'w':
 	{
 		int num = star;
-		
+
 		if(num<pointver.size()/6){
 			pointver[num*6+1]+=0.02f;
 		} else if(num<pointver.size()/6+linever.size()/12){
@@ -691,8 +691,7 @@ void Mouse (int button,int state,int x,int y)
 					star=i+pointver.size()/6+linever.size()/12+triver.size()/18;
 					cout<<star<<endl;
 					break;
-				}
-				else if(PointToTriangle(tranformx(x),tranformy(y),twotriver[i*36+18],twotriver[i*36+1+18],twotriver[i*36+6+18],twotriver[i*36+7+18],twotriver[i*36+12+18],twotriver[i*36+13+18])){
+				} else if(PointToTriangle(tranformx(x),tranformy(y),twotriver[i*36+18],twotriver[i*36+1+18],twotriver[i*36+6+18],twotriver[i*36+7+18],twotriver[i*36+12+18],twotriver[i*36+13+18])){
 					b=true;
 					star=i+pointver.size()/6+linever.size()/12+triver.size()/18;
 					cout<<star<<endl;
@@ -716,7 +715,7 @@ void Mouse (int button,int state,int x,int y)
 				};
 				pointver.insert(pointver.end(),point,point+6);
 			}
-				break;
+			break;
 			case 1:
 			{
 				uniform_int_distribution<int> dqd(0,360);
@@ -726,7 +725,7 @@ void Mouse (int button,int state,int x,int y)
 				};
 				linever.insert(linever.end(),line,line+12);
 			}
-				break;
+			break;
 			case 2:
 			{
 
@@ -739,7 +738,7 @@ void Mouse (int button,int state,int x,int y)
 
 
 			}
-				break;
+			break;
 			case 3:
 			{
 				float triangle1[]={
@@ -759,7 +758,7 @@ void Mouse (int button,int state,int x,int y)
 			}
 			++check;
 		}
-		
+
 	}
 	glutPostRedisplay ();
 
@@ -767,7 +766,7 @@ void Mouse (int button,int state,int x,int y)
 void Motion (int x,int y)
 {
 	if(left_mouse){
-		
+
 	}
 
 }
@@ -777,9 +776,9 @@ int glutGetModifiers (){ //컨트롤 알트 시프트 확인
 }
 void TimerFunction (int value)
 {
-	
+
 	if(!left_mouse){
-		
+
 	}
 	glutPostRedisplay ();
 	glutTimerFunc (10,TimerFunction,1);
@@ -816,11 +815,11 @@ void make_vertexShaders()
 	GLint result;
 	GLchar errorLog[512];
 	glGetShaderiv (vertexShader,GL_COMPILE_STATUS,&result);
-		if (!result)
+	if(!result)
 	{
-			glGetShaderInfoLog (vertexShader,512,NULL,errorLog);
-			cerr << "ERROR: vertex shader 컴파일 실패 \n" << errorLog << std :: endl;
-			return;
+		glGetShaderInfoLog (vertexShader,512,NULL,errorLog);
+		cerr << "ERROR: vertex shader 컴파일 실패 \n" << errorLog << std :: endl;
+		return;
 	}
 }
 
@@ -840,7 +839,7 @@ void make_fragmentShaders()
 	{
 		glGetShaderInfoLog (fragmentShader,512,NULL,errorLog);
 		std::cerr << "ERROR: frag_shader 컴파일 실패 \n" << errorLog << std :: endl;
-			return;
+		return;
 	}
 }
 
@@ -860,7 +859,7 @@ GLuint make_shaderProgram()
 	if(!result) {
 		glGetProgramInfoLog (shaderID,512,NULL,errorLog);
 		std::cerr << "ERROR: shader program 연결 실패 \n" << errorLog << std::endl;
-			return false;
+		return false;
 	}
 	glUseProgram (shaderID); //만들어진 세이더 프로그램 사용하기
 	//여러 개의 세이더프로그램 만들 수 있고,그 중 한개의 프로그램을 사용하려면

@@ -23,7 +23,16 @@ mt19937 gen(rd());
 uniform_real_distribution<float> dis(0.0f,1.0f);
 uniform_real_distribution<float> did(-1.0f,1.0f);
 uniform_real_distribution<float> dii(0.1f,0.5f);
-
+/*GLfloat tranformx(int x){
+	return x - (SIZE / 2);
+}
+GLfloat tranformy(int y){
+	return (SIZE / 2) - y;
+}
+void GLRectf(RECT rect){
+	FRECT frect= {static_cast<GLfloat>(rect.left)/(SIZE/2),static_cast<GLfloat>(rect.top)/(SIZE/2),static_cast<GLfloat>(rect.right)/(SIZE/2),static_cast<GLfloat>(rect.bottom)/(SIZE/2)};
+	glRectf(frect.left,frect.top,frect.right,frect.bottom);
+}*/
 struct FPOINT{
 	GLfloat x;
 	GLfloat y;

@@ -2,6 +2,12 @@
 #version 330 core
 
 
+in vec3 out_Color; //--- 버텍스 세이더에게서 전달 받음
+out vec4 FragColor; //--- 색상 출력
+void main ()
+{
+	FragColor = vec4 (out_Color, 1.0);
+}
 /*
 //--- fragment shader: fragment.glsl 파일에 저장
 #version 330 core
@@ -40,8 +46,3 @@ FragColor = vec4 (outColor, 1.0);
 
 
 
-out vec4 color;
-void main ()
-{
-	color = vec4 (1.0, 0.0, 0.0, 1.0); //빨강색으로 색상 고정
-}
