@@ -173,7 +173,7 @@ vector<float> twotriver;
 void updateVBO()
 {
 	// 1. 두 벡터를 합칠 임시 벡터 생성
-	vector<GLfloat> comver;
+	vector<float> comver;
 	comver.insert(comver.end(),pointver.begin(),pointver.end());
 	comver.insert(comver.end(),linever.begin(),linever.end());
 	comver.insert(comver.end(),triver.begin(),triver.end());
