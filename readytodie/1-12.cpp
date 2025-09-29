@@ -15,9 +15,7 @@ vector<GLfloat> a,c;
 vector<int>_i;
 int time_count=0;
 int stack_count=0;
-bool check=0;
-int mode=0;
-GLfloat rColor=0,gColor=0,bColor=0;
+int check=0;
 GLuint VAO,VBO;
 GLchar *vertexSource,*fragmentSource; //--- 소스코드 저장 변수 //--- 세이더 객체
 const float vertexData[] =
@@ -35,7 +33,7 @@ const float vertexData[] =
 bool left_mouse=false;
 random_device rd;
 mt19937 gen(rd());
-uniform_real_distribution<float> dis(-1.0f,1.0f);
+uniform_int_distribution<int> dis(0,SIZE/2);
 uniform_int_distribution<int> did(-SIZE/2,SIZE/2);
 uniform_real_distribution<float> rcolor(0.0f,1.0f);
 uniform_real_distribution<float> rtri(0.0f,0.2f);
@@ -107,45 +105,6 @@ void InflateFRect(FRECT& rect,GLfloat x,GLfloat y){
 	rect.right+=x;
 	rect.bottom+=y;
 }
-void tri90DegressRotate(float &v1x,float &v1y,float &v2x,float &v2y,float &v3x,float &v3y){
-	float centerX = (v1x + v2x + v3x) / 3.0f;
-	float centerY = (v1y + v2y + v3y) / 3.0f;
-
-	float nv1x = -(v1y - centerY) + centerX;
-	float nv1y =  (v1x - centerX) + centerY;
-	float nv2x = -(v2y - centerY) + centerX;
-	float nv2y =  (v2x - centerX) + centerY;
-	float nv3x = -(v3y - centerY) + centerX;
-	float nv3y =  (v3x - centerX) + centerY;
-
-	v1x = nv1x;
-	v1y = nv1y;
-	v2x = nv2x;
-	v2y = nv2y;
-	v3x = nv3x;
-	v3y = nv3y;
-}
-
-void triRotate(float &v1x,float &v1y,float &v2x,float &v2y,float &v3x,float &v3y,const float &radian){
-	float d = radian * 3.141592 / 180;
-	float X = (v1x + v2x + v3x) / 3.0;
-	float Y = (v1y + v2y + v3y) / 3.0;
-
-	float temp1x = (v1x - X) * cos(d) - (v1y - Y) * sin(d);
-	float temp1y = (v1x - X) * sin(d) + (v1y - Y) * cos(d);
-	float temp2x = (v2x - X) * cos(d) - (v2y - Y) * sin(d);
-	float temp2y = (v2x - X) * sin(d) + (v2y - Y) * cos(d);
-	float temp3x = (v3x - X) * cos(d) - (v3y - Y) * sin(d);
-	float temp3y = (v3x - X) * sin(d) + (v3y - Y) * cos(d);
-
-	v1x = temp1x + X;
-	v1y = temp1y + Y;
-	v2x = temp2x + X;
-	v2y = temp2y + Y;
-	v3x = temp3x + X;
-	v3y = temp3y + Y;
-}
-
 bool FPtInFRect(const FRECT& rect,const FPOINT& point){
 	return (std::min(rect.left,rect.right) <= point.x && point.x <= std::max(rect.left,rect.right) &&
 			std::min(rect.top,rect.bottom) <= point.y && point.y <= std::max(rect.top,rect.bottom));
@@ -211,26 +170,11 @@ vector<float> triver1;
 vector<float> triver2;
 vector<float> triver3;
 vector<float> triver4;
-vector<float> ctriver1;
-vector<float> ctriver2;
-vector<float> ctriver3;
-vector<float> ctriver4;
 vector<float> twotriver;
+vector<float> pentatriver;
+vector<float> llinever;
 
-vector<int> triver1_count;
-vector<int> triver2_count;
-vector<int> triver3_count;
-vector<int> triver4_count;
-
-array<int,4> triver1_time={0,0,0,0};
-array<int,4> triver2_time={0,0,0,0};
-array<int,4> triver3_time={0,0,0,0};
-array<int,4> triver4_time={0,0,0,0};
-
-array<int,4> triver1_radian={0,0,0,0};
-array<int,4> triver2_radian={0,0,0,0};
-array<int,4> triver3_radian={0,0,0,0};
-array<int,4> triver4_radian={0,0,0,0};
+array<int,4> mode={0,1,2,3};
 
 void updateVBO()
 {
@@ -243,6 +187,8 @@ void updateVBO()
 	comver.insert(comver.end(),triver3.begin(),triver3.end());
 	comver.insert(comver.end(),triver4.begin(),triver4.end());
 	comver.insert(comver.end(),twotriver.begin(),twotriver.end());
+	comver.insert(comver.end(),pentatriver.begin(),pentatriver.end());
+	comver.insert(comver.end(),llinever.begin(),llinever.end());
 
 	// 2. 합쳐진 데이터로 VBO를 새로 업데이트
 	if(!comver.empty())
@@ -258,17 +204,73 @@ FRECT rect[4]={0,0,1.0f,1.0f,
 0,-1.0f,1.0f,0};
 void Initdata()
 {
+	float lline[]={
+		0,1.0f,0.0f,1.0f,1.0f,1.0f,
+		0,-1.0f,0.0f,1.0f,1.0f,1.0f,
+		1.0f,0,0.0f,1.0f,1.0f,1.0f,
+		-1.0f,0,0.0f,1.0f,1.0f,1.0f
+	};
+	llinever.insert(llinever.end(),lline,lline+24);
+	//float inr=rcolor(gen),ingr=rcolor(gen),inb=rcolor(gen);
+	float line[]={
+		0.4f,0.4f,0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
+		0.6f,0.4f,0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
+
+		-0.4f,0.4f,0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
+		-0.6f,0.4f,0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
+
+		-0.4f,-0.6f,0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
+		-0.6f,-0.6f,0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
+
+		0.4f,-0.6f,0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
+		0.6f,-0.6f,0.0f,rcolor(gen),rcolor(gen),rcolor(gen)
+	};
+	linever.insert(linever.end(),line,line+48);
+
+	float triangle[]={
+		0.5f,0.6f,0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
+		0.4f,0.4f,0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
+		0.6f,0.4f,0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
+
+		-0.5f,0.6f,0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
+		-0.4f,0.4f,0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
+		-0.6f,0.4f,0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
+
+		-0.5f,-0.4f,0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
+		-0.4f,-0.6f,0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
+		-0.6f,-0.6f,0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
+
+		0.5f,-0.4f,0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
+		0.4f,-0.6f,0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
+		0.6f,-0.6f,0.0f,rcolor(gen),rcolor(gen),rcolor(gen)
+	};
+	triver1.insert(triver1.end(),triangle,triangle+72);
+
+	float rantangle[]={
+		0.6f,0.6f,0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
+		0.4f,0.6f,0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
+		0.4f,0.4f,0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
+		0.6f,0.4f,0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
+
+		-0.6f,0.6f,0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
+		-0.4f,0.6f,0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
+		-0.4f,0.4f,0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
+		-0.6f,0.4f,0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
+
+		-0.6f,-0.6f,0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
+		-0.4f,-0.6f,0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
+		-0.4f,-0.4f,0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
+		-0.6f,-0.4f,0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
+
+		0.6f,-0.6f,0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
+		0.4f,-0.6f,0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
+		0.4f,-0.4f,0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
+		0.6f,-0.4f,0.0f,rcolor(gen),rcolor(gen),rcolor(gen)
+	};
+	twotriver.insert(twotriver.end(),rantangle,rantangle+72);
 
 }
 
-
-
-
-void Reset()
-{
-	pointver.clear();
-	rColor=gColor=bColor=0;
-}
 int main(int argc,char** argv)
 {
 	//--- 윈도우 생성하기		 //--- 윈도우 출력하고 콜백함수 설정
@@ -315,9 +317,9 @@ GLvoid drawScene () //--- 콜백 함수: 그리기 콜백 함수
 	updateVBO();
 
 
-
-
-	//--- 배경색을 파랑색으로 설정
+	GLfloat rColor,gColor,bColor;
+	rColor = bColor = 0;
+	gColor = 0; //--- 배경색을 파랑색으로 설정
 	glClearColor(rColor,gColor,bColor,1.0f);
 	glClear(GL_COLOR_BUFFER_BIT);
 	//--- uniform 변수의 인덱스 값
@@ -327,7 +329,7 @@ GLvoid drawScene () //--- 콜백 함수: 그리기 콜백 함수
 	//--- 사용할 VAO 불러오기
 	//glBindVertexArray(vao);
 	//--- uniform 변수의 위치에 변수의 값 설정
-	//glUniform4f (vColorLocation,1.0f,0.0f,0.0f,1.0f); 
+	//glUniform4f (vColorLocation,1.0f,0.0f,0.0f,1.0f);
 
 	//--- 필요한 드로잉 함수 호출
 	glBindVertexArray(VAO);
@@ -338,30 +340,42 @@ GLvoid drawScene () //--- 콜백 함수: 그리기 콜백 함수
 	int triangleCount4 = triver4.size() / 6;
 	int pointCount = pointver.size() / 6;
 	int lineCount = linever.size() / 6;
+	int llineCount = llinever.size() / 6;
 	int rectangleCount = twotriver.size() / 6;
-
+	int pentatriCount = pentatriver.size() / 6;
+	glPointSize(10.0f);
 	int offset = 0;
 
 	// 1. 점 그리기
 	if(pointCount > 0)
 	{
-		glPointSize(1.0f);
+		glPointSize(10.0f);
 		glDrawArrays(GL_POINTS,offset,pointCount);
 		offset += pointCount;
 	}
 	// 2. 선 그리기
 	if(lineCount > 0)
 	{
+
 		glLineWidth(10.0f);
-		glDrawArrays(GL_LINES,offset,lineCount);
+
+		for(int i=0;i<4;++i){
+			if(mode[i]==0)
+			glDrawArrays(GL_LINES,offset,2);
+			offset += 2;
+		}
+		
+		
 		glLineWidth(1.0f);
-		offset += lineCount;
 	}
 	// 3. 삼각형 그리기
 	if(triangleCount1 > 0)
 	{
-		glDrawArrays(GL_TRIANGLES,offset,triangleCount1);
-		offset += triangleCount1;
+		for(int i=0;i<4;++i){
+			if(mode[i]==1)
+			glDrawArrays(GL_TRIANGLES,offset,3);
+			offset += 3;
+		}
 	}
 	if(triangleCount2 > 0)
 	{
@@ -381,8 +395,28 @@ GLvoid drawScene () //--- 콜백 함수: 그리기 콜백 함수
 	// 4. 사각형 그리기
 	if(rectangleCount > 0)
 	{
-		glDrawArrays(GL_TRIANGLES,offset,rectangleCount);
-		offset += lineCount;
+		for(int i=0;i<4;++i){
+			if(mode[i]==2)
+				glDrawArrays(GL_TRIANGLES,offset,6);
+			offset += 6;
+		}
+	}
+	// 5. 오각형 그리기
+	if(pentatriCount > 0)
+	{
+		for(int i=0;i<4;++i){
+			if(mode[i]==3)
+				glDrawArrays(GL_TRIANGLES,offset,9);
+			offset += 9;
+		}
+	}
+	// 6. 굵은 선 그리기
+	if(llineCount > 0)
+	{
+		glLineWidth(10.0f);
+		glDrawArrays(GL_LINES,offset,llineCount);
+		glLineWidth(1.0f);
+		offset += llineCount;
 	}
 
 
@@ -413,25 +447,20 @@ void Keyupboard(unsigned char key,int x,int y){
 void Keyboard(unsigned char key,int x,int y)
 {
 	switch(key) {
-	case 'p':
-	check=false;
-	break;
 	case 'l':
-	check=true;
+	
 	break;
-	case '1':
-	case '2':
-	case '3':
-	case '4':
-	case '5':
-	mode=key-'0';
-
+	case 't':
+	
+	break;
+	case 'r':
 
 	break;
-	case 'c':
-	Reset();
+	case 'p':
 
-
+	break;
+	case 'a':
+	Initdata();
 	break;
 	case 'q':
 	exit(0);
@@ -442,28 +471,13 @@ void SpecialKeyboard (int key,int x,int y)
 {
 
 }
-bool qwe=false;
-int num=0;
-int num2=1262;
-float mx,my;
-float cmx=dis(gen),cmy=dis(gen);
-bool qwer=false;
 void Mouse (int button,int state,int x,int y)
 {
 	if(button == GLUT_LEFT_BUTTON && state == GLUT_DOWN){
-		qwe=true;
-		num=0;
-		num2=1262;
-		qwer=false;
-		//pointver.clear();
-		mx=tranformx(x),my=tranformx(y);
-		//rColor=rcolor(gen),gColor=rcolor(gen),bColor=rcolor(gen);
-
-
+		
 	}
 	if(button == GLUT_RIGHT_BUTTON && state == GLUT_DOWN){
-
-
+		
 	}
 	glutPostRedisplay ();
 
@@ -481,70 +495,10 @@ int glutGetModifiers (){ //컨트롤 알트 시프트 확인
 }
 void TimerFunction (int value)
 {
-	if(qwe){
-		//rColor=rcolor(gen),gColor=rcolor(gen),bColor=rcolor(gen);
-		const int count=360*3;
-		float sx,sy;
-		float r0 = 0.01f;
-		float r_step = 0.0015f;
-		float radius = r0 + r_step * static_cast<float>(num)/10;
-		float radius2 = r0 + r_step * static_cast<float>(num2)/10;
-		if(!qwer){
-			if(num%10==0||check){
-				sx = mx+radius*cos(static_cast<float>(num)/180.0f*3.14f);
-				sy = -my+radius*sin(static_cast<float>(num)/180.0f*3.14f);
 
-				float f[]={sx,sy,0.0f,1.0f,1.0f,1.0f};
-				pointver.insert(pointver.end(),f,f+6);
-			}
-			if(num>1080){
-				qwer=true;
-			}
-			num++;
+	if(!left_mouse){
 
-		}
-		else{
-			if(num2%10==0||num2==count*3-1+182||check){
-				float mx2=mx+0.369f;
-				sx = mx2+radius2*cos(static_cast<float>(num2)/180.0f*3.14f);
-				sy = -my+radius2*sin(static_cast<float>(num2)/180.0f*3.14f);
-				float f[]={sx,sy,0.0f,1.0f,1.0f,1.0f};
-				pointver.insert(pointver.end(),f,f+6);
-			}
-			--num2;
-			if(num2<=0){
-				qwe=false;
-
-			}
-		}
-
-		for(int i=0;i<mode-1;++i){
-
-			if(!qwer){
-				if(num%10==0||check){
-					sx = mx+radius*cos(static_cast<float>(num)/180.0f*3.14f);
-					sy = -my+radius*sin(static_cast<float>(num)/180.0f*3.14f);
-					float f[]={sx,sy,0.0f,1.0f,1.0f,1.0f};
-					pointver.insert(pointver.end(),f,f+6);
-				}
-			}
-			else{
-				if(num%10==0||num2==count*3-1+182||check){
-					float mx2=mx+0.369f;
-					sx = mx2+radius2*cos(static_cast<float>(num2)/180.0f*3.14f);
-					sy = -my+radius2*sin(static_cast<float>(num2)/180.0f*3.14f);
-					float f[]={sx,sy,0.0f,1.0f,1.0f,1.0f};
-					pointver.insert(pointver.end(),f,f+6);
-
-				}
-			}
-
-		}
-
-		
-		
 	}
-
 	glutPostRedisplay ();
 	glutTimerFunc (10,TimerFunction,1);
 }

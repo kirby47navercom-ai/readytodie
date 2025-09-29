@@ -258,7 +258,7 @@ FRECT rect[4]={0,0,1.0f,1.0f,
 0,-1.0f,1.0f,0};
 void Initdata()
 {
-
+	
 }
 
 
@@ -315,9 +315,9 @@ GLvoid drawScene () //--- 콜백 함수: 그리기 콜백 함수
 	updateVBO();
 
 
-
-
-	//--- 배경색을 파랑색으로 설정
+	
+	
+	 //--- 배경색을 파랑색으로 설정
 	glClearColor(rColor,gColor,bColor,1.0f);
 	glClear(GL_COLOR_BUFFER_BIT);
 	//--- uniform 변수의 인덱스 값
@@ -426,7 +426,7 @@ void Keyboard(unsigned char key,int x,int y)
 	case '5':
 	mode=key-'0';
 
-
+	
 	break;
 	case 'c':
 	Reset();
@@ -445,25 +445,23 @@ void SpecialKeyboard (int key,int x,int y)
 bool qwe=false;
 int num=0;
 int num2=1262;
-float mx,my;
+float mx=tranformx(x),my=tranformx(y);
 float cmx=dis(gen),cmy=dis(gen);
-bool qwer=false;
 void Mouse (int button,int state,int x,int y)
 {
 	if(button == GLUT_LEFT_BUTTON && state == GLUT_DOWN){
 		qwe=true;
 		num=0;
 		num2=1262;
-		qwer=false;
 		//pointver.clear();
 		mx=tranformx(x),my=tranformx(y);
-		//rColor=rcolor(gen),gColor=rcolor(gen),bColor=rcolor(gen);
+		rColor=rcolor(gen),gColor=rcolor(gen),bColor=rcolor(gen);
 
-
+		
 	}
 	if(button == GLUT_RIGHT_BUTTON && state == GLUT_DOWN){
-
-
+		
+			
 	}
 	glutPostRedisplay ();
 
@@ -487,64 +485,53 @@ void TimerFunction (int value)
 		float sx,sy;
 		float r0 = 0.01f;
 		float r_step = 0.0015f;
-		float radius = r0 + r_step * static_cast<float>(num)/10;
-		float radius2 = r0 + r_step * static_cast<float>(num2)/10;
-		if(!qwer){
-			if(num%10==0||check){
+		if(num%10==0||check){
+			float radius = r0 + r_step * num/10; // 점점 커지는 반지름
+			sx = mx+radius*cos(static_cast<float>(num)/180.0f*3.14f);
+			sy = -my+radius*sin(static_cast<float>(num)/180.0f*3.14f);
+			float f[]={sx,sy,0.0f,1.0f,1.0f,1.0f};
+			pointver.insert(pointver.end(),f,f+6);
+		}
+
+		
+			if(num%10==0||num==count*3-1+182||check){
+				float radius = r0 + r_step * num/10; // 점점 커지는 반지름
 				sx = mx+radius*cos(static_cast<float>(num)/180.0f*3.14f);
 				sy = -my+radius*sin(static_cast<float>(num)/180.0f*3.14f);
-
 				float f[]={sx,sy,0.0f,1.0f,1.0f,1.0f};
 				pointver.insert(pointver.end(),f,f+6);
 			}
-			if(num>1080){
-				qwer=true;
-			}
-			num++;
-
-		}
-		else{
-			if(num2%10==0||num2==count*3-1+182||check){
-				float mx2=mx+0.369f;
-				sx = mx2+radius2*cos(static_cast<float>(num2)/180.0f*3.14f);
-				sy = -my+radius2*sin(static_cast<float>(num2)/180.0f*3.14f);
-				float f[]={sx,sy,0.0f,1.0f,1.0f,1.0f};
-				pointver.insert(pointver.end(),f,f+6);
-			}
-			--num2;
-			if(num2<=0){
-				qwe=false;
-
-			}
-		}
-
+		
 		for(int i=0;i<mode-1;++i){
-
-			if(!qwer){
+			
+			
 				if(num%10==0||check){
+					float radius = r0 + r_step * num/10; // 점점 커지는 반지름
 					sx = mx+radius*cos(static_cast<float>(num)/180.0f*3.14f);
 					sy = -my+radius*sin(static_cast<float>(num)/180.0f*3.14f);
 					float f[]={sx,sy,0.0f,1.0f,1.0f,1.0f};
 					pointver.insert(pointver.end(),f,f+6);
 				}
-			}
-			else{
-				if(num%10==0||num2==count*3-1+182||check){
-					float mx2=mx+0.369f;
-					sx = mx2+radius2*cos(static_cast<float>(num2)/180.0f*3.14f);
-					sy = -my+radius2*sin(static_cast<float>(num2)/180.0f*3.14f);
+				if(num%10==0||i==count*3-1+182||check){
+					float radius = r0 + r_step * i/10; // 점점 커지는 반지름
+					sx = mx+radius*cos(static_cast<float>(num)/180.0f*3.14f);
+					sy = -my+radius*sin(static_cast<float>(num)/180.0f*3.14f);
 					float f[]={sx,sy,0.0f,1.0f,1.0f,1.0f};
 					pointver.insert(pointver.end(),f,f+6);
-
+					
 				}
-			}
 
 		}
-
-		
-		
+		if(num<1080)
+		num++;
+		--num2;
+		if(num2<=0){
+			qwe=false;
+			cout<<"dt"<<endl;
+		}
+		mx+=0.369f;
+		//cout<< pointver.size();
 	}
-
 	glutPostRedisplay ();
 	glutTimerFunc (10,TimerFunction,1);
 }
