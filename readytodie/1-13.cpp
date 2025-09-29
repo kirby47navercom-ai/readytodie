@@ -15,9 +15,8 @@ vector<GLfloat> a,c;
 vector<int>_i;
 int time_count=0;
 int stack_count=0;
-bool check=0;
-int mode=0;
-GLfloat rColor=0,gColor=0,bColor=0;
+array<int,4> check={0,0,0,0};
+bool animate=false;
 GLuint VAO,VBO;
 GLchar *vertexSource,*fragmentSource; //--- 소스코드 저장 변수 //--- 세이더 객체
 const float vertexData[] =
@@ -35,8 +34,8 @@ const float vertexData[] =
 bool left_mouse=false;
 random_device rd;
 mt19937 gen(rd());
-uniform_real_distribution<float> dis(-1.0f,1.0f);
-uniform_int_distribution<int> did(-SIZE/2,SIZE/2);
+uniform_int_distribution<int> dis(0,SIZE/2);
+uniform_real_distribution<float> did(-1.0f,1.0f);
 uniform_real_distribution<float> rcolor(0.0f,1.0f);
 uniform_real_distribution<float> rtri(0.0f,0.2f);
 struct FPOINT{
@@ -107,45 +106,6 @@ void InflateFRect(FRECT& rect,GLfloat x,GLfloat y){
 	rect.right+=x;
 	rect.bottom+=y;
 }
-void tri90DegressRotate(float &v1x,float &v1y,float &v2x,float &v2y,float &v3x,float &v3y){
-	float centerX = (v1x + v2x + v3x) / 3.0f;
-	float centerY = (v1y + v2y + v3y) / 3.0f;
-
-	float nv1x = -(v1y - centerY) + centerX;
-	float nv1y =  (v1x - centerX) + centerY;
-	float nv2x = -(v2y - centerY) + centerX;
-	float nv2y =  (v2x - centerX) + centerY;
-	float nv3x = -(v3y - centerY) + centerX;
-	float nv3y =  (v3x - centerX) + centerY;
-
-	v1x = nv1x;
-	v1y = nv1y;
-	v2x = nv2x;
-	v2y = nv2y;
-	v3x = nv3x;
-	v3y = nv3y;
-}
-
-void triRotate(float &v1x,float &v1y,float &v2x,float &v2y,float &v3x,float &v3y,const float &radian){
-	float d = radian * 3.141592 / 180;
-	float X = (v1x + v2x + v3x) / 3.0;
-	float Y = (v1y + v2y + v3y) / 3.0;
-
-	float temp1x = (v1x - X) * cos(d) - (v1y - Y) * sin(d);
-	float temp1y = (v1x - X) * sin(d) + (v1y - Y) * cos(d);
-	float temp2x = (v2x - X) * cos(d) - (v2y - Y) * sin(d);
-	float temp2y = (v2x - X) * sin(d) + (v2y - Y) * cos(d);
-	float temp3x = (v3x - X) * cos(d) - (v3y - Y) * sin(d);
-	float temp3y = (v3x - X) * sin(d) + (v3y - Y) * cos(d);
-
-	v1x = temp1x + X;
-	v1y = temp1y + Y;
-	v2x = temp2x + X;
-	v2y = temp2y + Y;
-	v3x = temp3x + X;
-	v3y = temp3y + Y;
-}
-
 bool FPtInFRect(const FRECT& rect,const FPOINT& point){
 	return (std::min(rect.left,rect.right) <= point.x && point.x <= std::max(rect.left,rect.right) &&
 			std::min(rect.top,rect.bottom) <= point.y && point.y <= std::max(rect.top,rect.bottom));
@@ -211,26 +171,39 @@ vector<float> triver1;
 vector<float> triver2;
 vector<float> triver3;
 vector<float> triver4;
-vector<float> ctriver1;
-vector<float> ctriver2;
-vector<float> ctriver3;
-vector<float> ctriver4;
 vector<float> twotriver;
+vector<float> pentatriver;
+vector<float> llinever;
+vector<float> clinever;
+vector<float> ctriver1;
+vector<float> ctwotriver;
+vector<float> cpentatriver;
 
-vector<int> triver1_count;
-vector<int> triver2_count;
-vector<int> triver3_count;
-vector<int> triver4_count;
 
-array<int,4> triver1_time={0,0,0,0};
-array<int,4> triver2_time={0,0,0,0};
-array<int,4> triver3_time={0,0,0,0};
-array<int,4> triver4_time={0,0,0,0};
+vector<bool>pointverb;
+vector<bool>lineverb;
+vector<bool>triver1b;
+vector<bool>twotriverb;
+vector<bool>pentatriverb;
 
-array<int,4> triver1_radian={0,0,0,0};
-array<int,4> triver2_radian={0,0,0,0};
-array<int,4> triver3_radian={0,0,0,0};
-array<int,4> triver4_radian={0,0,0,0};
+vector<int>pointveri;
+vector<int>lineveri;
+vector<int>triver1i;
+vector<int>twotriveri;
+vector<int>pentatriveri;
+
+
+array<int,4> mode={0,1,2,3};
+
+float color1[3] = {0.23f,0.81f,0.47f};
+float color2[3] = {0.92f,0.14f,0.66f};
+float color3[3] = {0.35f,0.59f,0.99f};
+float color4[3] = {0.77f,0.41f,0.12f};
+
+int start,eend;
+int selected=-1;
+
+
 
 void updateVBO()
 {
@@ -239,10 +212,9 @@ void updateVBO()
 	comver.insert(comver.end(),pointver.begin(),pointver.end());
 	comver.insert(comver.end(),linever.begin(),linever.end());
 	comver.insert(comver.end(),triver1.begin(),triver1.end());
-	comver.insert(comver.end(),triver2.begin(),triver2.end());
-	comver.insert(comver.end(),triver3.begin(),triver3.end());
-	comver.insert(comver.end(),triver4.begin(),triver4.end());
 	comver.insert(comver.end(),twotriver.begin(),twotriver.end());
+	comver.insert(comver.end(),pentatriver.begin(),pentatriver.end());
+	comver.insert(comver.end(),llinever.begin(),llinever.end());
 
 	// 2. 합쳐진 데이터로 VBO를 새로 업데이트
 	if(!comver.empty())
@@ -251,6 +223,7 @@ void updateVBO()
 		glBufferData(GL_ARRAY_BUFFER,sizeof(GLfloat) * comver.size(),comver.data(),GL_DYNAMIC_DRAW);
 	}
 }
+
 vector<dtd> art;
 FRECT rect[4]={0,0,1.0f,1.0f,
 -1.0f,0,0,1.0f,
@@ -258,17 +231,145 @@ FRECT rect[4]={0,0,1.0f,1.0f,
 0,-1.0f,1.0f,0};
 void Initdata()
 {
-
-}
-
-
-
-
-void Reset()
-{
 	pointver.clear();
-	rColor=gColor=bColor=0;
+	linever.clear();
+	triver1.clear();
+	twotriver.clear();
+	pentatriver.clear();
+	llinever.clear();
+	pointverb.clear();
+	lineverb.clear();
+	triver1b.clear();
+	twotriverb.clear();
+	pentatriverb.clear();
+
+	//float inr=rcolor(gen),ingr=rcolor(gen),inb=rcolor(gen);
+	float point[]={
+		did(gen),did(gen),0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
+
+		did(gen),did(gen),0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
+
+		did(gen),did(gen),0.0f,rcolor(gen),rcolor(gen),rcolor(gen)
+	};
+	pointver.insert(pointver.end(),point,point+18);
+	pointverb.push_back(false),pointverb.push_back(false),pointverb.push_back(false);
+	pointveri.push_back(0),pointveri.push_back(0),pointveri.push_back(0);
+	float x1=did(gen),y1=did(gen),x2=did(gen),y2=did(gen),x3=did(gen),y3=did(gen);
+	float line[]={
+		x1,y1,0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
+		x1+0.1f,y1+0.1f,0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
+
+		x2,y2,0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
+		x2+0.1f,y2+0.1f,0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
+
+		x3,y3,0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
+		x3+0.1f,y3+0.1f,0.0f,rcolor(gen),rcolor(gen),rcolor(gen)
+	};
+	linever.insert(linever.end(),line,line+36);
+	clinever.insert(clinever.end(),line,line+36);
+	lineverb.push_back(false),lineverb.push_back(false),lineverb.push_back(false);
+	lineveri.push_back(0),lineveri.push_back(0),lineveri.push_back(0);
+
+	x1=did(gen),y1=did(gen),x2=did(gen),y2=did(gen),x3=did(gen),y3=did(gen);
+
+	float triangle[]={
+		x1,y1,0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
+		x1-0.1f,y1-0.2f,0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
+		x1+0.1f,y1-0.2f,0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
+
+		x2,y2,0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
+		x2-0.1f,y2-0.2f,0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
+		x2+0.1f,y2-0.2f,0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
+
+		x3,y3,0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
+		x3-0.1f,y3-0.2f,0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
+		x3+0.1f,y3-0.2f,0.0f,rcolor(gen),rcolor(gen),rcolor(gen)
+
+	};
+	triver1.insert(triver1.end(),triangle,triangle+54);
+	ctriver1.insert(ctriver1.end(),triangle,triangle+54);
+	triver1b.push_back(false),triver1b.push_back(false),triver1b.push_back(false);
+	triver1i.push_back(0),triver1i.push_back(0),triver1i.push_back(0);
+
+	x1=did(gen),y1=did(gen),x2=did(gen),y2=did(gen),x3=did(gen),y3=did(gen);
+
+	float rantangle[]={
+		x1,y1,0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
+		x1-0.2f,y1,0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
+		x1-0.2f,y1-0.2f,0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
+
+		x1,y1,0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
+		x1-0.2f,y1-0.2f,0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
+		x1,y1-0.2f,0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
+
+		x2,y2,0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
+		x2-0.2f,y2,0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
+		x2-0.2f,y2-0.2f,0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
+
+		x2,y2,0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
+		x2-0.2f,y2-0.2f,0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
+		x2,y2-0.2f,0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
+
+		x3,y3,0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
+		x3-0.2f,y3,0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
+		x3-0.2f,y3-0.2f,0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
+
+		x3,y3,0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
+		x3-0.2f,y3-0.2f,0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
+		x3,y3-0.2f,0.0f,rcolor(gen),rcolor(gen),rcolor(gen)
+
+
+	};
+	twotriver.insert(twotriver.end(),rantangle,rantangle+108);
+	ctwotriver.insert(ctwotriver.end(),rantangle,rantangle+108);
+	twotriverb.push_back(false),twotriverb.push_back(false),twotriverb.push_back(false);
+	twotriveri.push_back(0),twotriveri.push_back(0),twotriveri.push_back(0);
+	x1=did(gen),y1=did(gen),x2=did(gen),y2=did(gen),x3=did(gen),y3=did(gen);
+	float pentagon[]{
+
+		x1-0.1f,y1+0.1f,0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
+		x1-0.2f,y1,0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
+		x1,y1,0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
+
+		x1,y1,0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
+		x1-0.2f,y1,0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
+		x1-0.2f,y1-0.2f,0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
+
+		x1,y1,0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
+		x1-0.2f,y1-0.2f,0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
+		x1,y1-0.2f,0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
+
+		x2-0.1f,y2+0.1f,0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
+		x2-0.2f,y2,0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
+		x2,y2,0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
+
+		x2,y2,0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
+		x2-0.2f,y2,0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
+		x2-0.2f,y2-0.2f,0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
+
+		x2,y2,0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
+		x2-0.2f,y2-0.2f,0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
+		x2,y2-0.2f,0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
+
+		x3-0.1f,y3+0.1f,0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
+		x3-0.2f,y3,0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
+		x3,y3,0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
+
+		x3,y3,0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
+		x3-0.2f,y3,0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
+		x3-0.2f,y3-0.2f,0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
+
+		x3,y3,0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
+		x3-0.2f,y3-0.2f,0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
+		x3,y3-0.2f,0.0f,rcolor(gen),rcolor(gen),rcolor(gen)
+	};
+	pentatriver.insert(pentatriver.end(),pentagon,pentagon+162);
+	cpentatriver.insert(cpentatriver.end(),pentagon,pentagon+162);
+	pentatriverb.push_back(false),pentatriverb.push_back(false),pentatriverb.push_back(false);
+	pentatriveri.push_back(0),pentatriveri.push_back(0),pentatriveri.push_back(0);
+
 }
+
 int main(int argc,char** argv)
 {
 	//--- 윈도우 생성하기		 //--- 윈도우 출력하고 콜백함수 설정
@@ -315,9 +416,9 @@ GLvoid drawScene () //--- 콜백 함수: 그리기 콜백 함수
 	updateVBO();
 
 
-
-
-	//--- 배경색을 파랑색으로 설정
+	GLfloat rColor,gColor,bColor;
+	rColor = bColor = 0;
+	gColor = 0; //--- 배경색을 파랑색으로 설정
 	glClearColor(rColor,gColor,bColor,1.0f);
 	glClear(GL_COLOR_BUFFER_BIT);
 	//--- uniform 변수의 인덱스 값
@@ -327,7 +428,7 @@ GLvoid drawScene () //--- 콜백 함수: 그리기 콜백 함수
 	//--- 사용할 VAO 불러오기
 	//glBindVertexArray(vao);
 	//--- uniform 변수의 위치에 변수의 값 설정
-	//glUniform4f (vColorLocation,1.0f,0.0f,0.0f,1.0f); 
+	//glUniform4f (vColorLocation,1.0f,0.0f,0.0f,1.0f);
 
 	//--- 필요한 드로잉 함수 호출
 	glBindVertexArray(VAO);
@@ -338,14 +439,16 @@ GLvoid drawScene () //--- 콜백 함수: 그리기 콜백 함수
 	int triangleCount4 = triver4.size() / 6;
 	int pointCount = pointver.size() / 6;
 	int lineCount = linever.size() / 6;
+	int llineCount = llinever.size() / 6;
 	int rectangleCount = twotriver.size() / 6;
-
+	int pentatriCount = pentatriver.size() / 6;
+	glPointSize(10.0f);
 	int offset = 0;
 
 	// 1. 점 그리기
 	if(pointCount > 0)
 	{
-		glPointSize(1.0f);
+		glPointSize(10.0f);
 		glDrawArrays(GL_POINTS,offset,pointCount);
 		offset += pointCount;
 	}
@@ -382,9 +485,13 @@ GLvoid drawScene () //--- 콜백 함수: 그리기 콜백 함수
 	if(rectangleCount > 0)
 	{
 		glDrawArrays(GL_TRIANGLES,offset,rectangleCount);
-		offset += lineCount;
+		offset += rectangleCount;
 	}
-
+	// 5. 오각형 그리기
+	if(pentatriCount > 0)
+	{
+		glDrawArrays(GL_TRIANGLES,offset,pentatriCount);
+	}
 
 	//for(int i=0;i<pointver.size()/6;++i){
 	//	glPointSize(5.0);
@@ -410,29 +517,16 @@ void idleScene()
 void Keyupboard(unsigned char key,int x,int y){
 
 }
+
+int time_[]={0,0,0,0};
 void Keyboard(unsigned char key,int x,int y)
 {
+
 	switch(key) {
-	case 'p':
-	check=false;
+	case 'a':
+	Initdata();
 	break;
-	case 'l':
-	check=true;
-	break;
-	case '1':
-	case '2':
-	case '3':
-	case '4':
-	case '5':
-	mode=key-'0';
 
-
-	break;
-	case 'c':
-	Reset();
-
-
-	break;
 	case 'q':
 	exit(0);
 	break;
@@ -445,74 +539,294 @@ void SpecialKeyboard (int key,int x,int y)
 void Mouse (int button,int state,int x,int y)
 {
 	if(button == GLUT_LEFT_BUTTON && state == GLUT_DOWN){
-		//rColor=rcolor(gen),gColor=rcolor(gen),bColor=rcolor(gen);
-		pointver.clear();
-		const int count=360;
-		float sx,sy;
-		float mx=tranformx(x),my=tranformx(y);
-		float r0 = 0.01f;
-		float r_step = 0.0015f;
-		time_count=0;
-		for(int i=0;i<count*3;++i){
-			if(time_count==10||check){
-				float radius = r0 + r_step * i/10; // 점점 커지는 반지름
-				sx = mx+radius*cos(static_cast<float>(i)/180.0f*3.14f);
-				sy = -my+radius*sin(static_cast<float>(i)/180.0f*3.14f);
-				float f[]={sx,sy,0.0f,1.0f,1.0f,1.0f};
-				pointver.insert(pointver.end(),f,f+6);
-				time_count=0;
+		bool b=false;
+		for(int i=0;i<pointver.size()/6;++i){
+			if(tranformx(x)>=pointver[i*6]-0.02&&tranformx(x)<=pointver[i*6]+0.02&&tranformy(y)>=pointver[i*6+1]-0.02&&tranformy(y)<=pointver[i*6+1]+0.02){
+				b=true;
+				left_mouse=true;
+				selected=0;
+				pointverb[i]=false;
+				pointveri[i]=0;
+				start=i;
+				break;
+			}
+		}
+
+		if(!b){
+			for(int i=0;i<linever.size()/12;++i){
+				if(PointToLine(tranformx(x),tranformy(y),linever[i*12],linever[i*12+1],linever[i*12+6],linever[i*12+7],0.02f)){
+					b=true;
+					left_mouse=true;
+					selected=1;
+					lineverb[i]=false;
+					lineveri[i]=0;
+					start=i;
+					break;
+				}
+			}
+		}
+
+		if(!b){
+			for(int i=0;i<triver1.size()/18;++i){
+				if(PointToTriangle(tranformx(x),tranformy(y),triver1[i*18],triver1[i*18+1],triver1[i*18+6],triver1[i*18+7],triver1[i*18+12],triver1[i*18+13])){
+					b=true;
+					left_mouse=true;
+					selected=2;
+					triver1b[i]=false;
+					triver1i[i]=0;
+					start=i;
+					break;
+				}
+			}
+		}
+
+		if(!b){
+			for(int i=0;i<twotriver.size()/36;++i){
+				if(PointToTriangle(tranformx(x),tranformy(y),twotriver[i*36],twotriver[i*36+1],twotriver[i*36+6],twotriver[i*36+7],twotriver[i*36+12],twotriver[i*36+13])){
+					b=true;
+					left_mouse=true;
+					selected=3;
+					twotriverb[i]=false;
+					twotriveri[i]=0;
+					start=i;
+					break;
+				} else if(PointToTriangle(tranformx(x),tranformy(y),twotriver[i*36+18],twotriver[i*36+1+18],twotriver[i*36+6+18],twotriver[i*36+7+18],twotriver[i*36+12+18],twotriver[i*36+13+18])){
+					b=true;
+					left_mouse=true;
+					selected=3;
+					twotriverb[i]=false;
+					twotriveri[i]=0;
+					start=i;
+					break;
+				}
 			}
 
-			time_count++;
 		}
-		mx+=0.369f;
-		time_count=0;
-		for(int i=count*3-1+182;i>=0;--i){
-			if(time_count==10||i==count*3-1+182||check){
-				float radius = r0 + r_step * i/10; // 점점 커지는 반지름
-				sx = mx+radius*cos(static_cast<float>(i)/180.0f*3.14f);
-				sy = -my+radius*sin(static_cast<float>(i)/180.0f*3.14f);
-				float f[]={sx,sy,0.0f,1.0f,1.0f,1.0f};
-				pointver.insert(pointver.end(),f,f+6);
-				time_count=0;
-			}
-			time_count++;
-		}
-		for(int i=0;i<mode-1;++i){
-			mx=dis(gen),my=dis(gen);
-			time_count=0;
-			for(int i=0;i<count*3;++i){
-				if(time_count==10||check){
-					float radius = r0 + r_step * i/10; // 점점 커지는 반지름
-					sx = mx+radius*cos(static_cast<float>(i)/180.0f*3.14f);
-					sy = -my+radius*sin(static_cast<float>(i)/180.0f*3.14f);
-					float f[]={sx,sy,0.0f,1.0f,1.0f,1.0f};
-					pointver.insert(pointver.end(),f,f+6);
-					time_count=0;
-				}
 
-				time_count++;
-			}
-			mx+=0.369f;
-			time_count=0;
-			for(int i=count*3-1+182;i>=0;--i){
-				if(time_count==10||i==count*3-1+182||check){
-					float radius = r0 + r_step * i/10; // 점점 커지는 반지름
-					sx = mx+radius*cos(static_cast<float>(i)/180.0f*3.14f);
-					sy = -my+radius*sin(static_cast<float>(i)/180.0f*3.14f);
-					float f[]={sx,sy,0.0f,1.0f,1.0f,1.0f};
-					pointver.insert(pointver.end(),f,f+6);
-					time_count=0;
+		if(!b){
+			for(int i=0;i<pentatriver.size()/54;++i){
+				if(PointToTriangle(tranformx(x),tranformy(y),pentatriver[i*54],pentatriver[i*54+1],pentatriver[i*54+6],pentatriver[i*54+7],pentatriver[i*54+12],pentatriver[i*54+13])){
+					b=true;
+					left_mouse=true;
+					selected=4;
+					pentatriverb[i]=false;
+					pentatriveri[i]=0;
+					start=i;
+					break;
+				} else if(PointToTriangle(tranformx(x),tranformy(y),pentatriver[i*54+18],pentatriver[i*54+1+18],pentatriver[i*54+6+18],pentatriver[i*54+7+18],pentatriver[i*54+12+18],pentatriver[i*54+13+18])){
+					b=true;
+					left_mouse=true;
+					selected=4;
+					pentatriverb[i]=false;
+					pentatriveri[i]=0;
+					start=i;
+					break;
+				} else if(PointToTriangle(tranformx(x),tranformy(y),pentatriver[i*54+36],pentatriver[i*54+1+36],pentatriver[i*54+6+36],pentatriver[i*54+7+36],pentatriver[i*54+12+36],pentatriver[i*54+13+36])){
+					b=true;
+					left_mouse=true;
+					selected=4;
+					pentatriverb[i]=false;
+					pentatriveri[i]=0;
+					start=i;
+					break;
 				}
-				time_count++;
 			}
+
 		}
-		//cout<< pointver.size();
 
 	}
 	if(button == GLUT_RIGHT_BUTTON && state == GLUT_DOWN){
 
+	}
+	if(button == GLUT_LEFT_BUTTON && state == GLUT_UP){
+		left_mouse=false;
+		int End;
+		int selected2=-1;
 
+		bool b=false;
+		for(int i=0;i<pointver.size()/6;++i){
+			if(tranformx(x)>=pointver[i*6]-0.02&&tranformx(x)<=pointver[i*6]+0.02&&tranformy(y)>=pointver[i*6+1]-0.02&&tranformy(y)<=pointver[i*6+1]+0.02&&(selected!=0||start!=i)){
+				b=true;
+				selected2=0;
+				End=i;
+				break;
+			}
+		}
+
+		if(!b){
+			for(int i=0;i<linever.size()/12;++i){
+				if(PointToLine(tranformx(x),tranformy(y),linever[i*12],linever[i*12+1],linever[i*12+6],linever[i*12+7],0.02f)&&(selected!=1||start!=i)){
+					b=true;
+					selected2=1;
+					End=i;
+					break;
+				}
+			}
+		}
+
+		if(!b){
+			for(int i=0;i<triver1.size()/18;++i){
+				if(PointToTriangle(tranformx(x),tranformy(y),triver1[i*18],triver1[i*18+1],triver1[i*18+6],triver1[i*18+7],triver1[i*18+12],triver1[i*18+13])&&(selected!=2||start!=i)){
+					b=true;
+					selected2=2;
+					End=i;
+					break;
+				}
+			}
+		}
+
+		if(!b){
+			for(int i=0;i<twotriver.size()/36;++i){
+				if(PointToTriangle(tranformx(x),tranformy(y),twotriver[i*36],twotriver[i*36+1],twotriver[i*36+6],twotriver[i*36+7],twotriver[i*36+12],twotriver[i*36+13])&&(selected!=3||start!=i)){
+					b=true;
+					selected2=3;
+					End=i;
+					break;
+				} else if(PointToTriangle(tranformx(x),tranformy(y),twotriver[i*36+18],twotriver[i*36+1+18],twotriver[i*36+6+18],twotriver[i*36+7+18],twotriver[i*36+12+18],twotriver[i*36+13+18])&&(selected!=3||start!=i)){
+					b=true;
+					selected2=3;
+					End=i;
+					break;
+				}
+			}
+
+		}
+
+		if(!b){
+			for(int i=0;i<pentatriver.size()/54;++i){
+				if(PointToTriangle(tranformx(x),tranformy(y),pentatriver[i*54],pentatriver[i*54+1],pentatriver[i*54+6],pentatriver[i*54+7],pentatriver[i*54+12],pentatriver[i*54+13])&&(selected!=4||start!=i)){
+					b=true;
+					selected2=4;
+					End=i;
+					break;
+				} else if(PointToTriangle(tranformx(x),tranformy(y),pentatriver[i*54+18],pentatriver[i*54+1+18],pentatriver[i*54+6+18],pentatriver[i*54+7+18],pentatriver[i*54+12+18],pentatriver[i*54+13+18])&&(selected!=4||start!=i)){
+					b=true;
+					selected2=4;
+					End=i;
+					break;
+				} else if(PointToTriangle(tranformx(x),tranformy(y),pentatriver[i*54+36],pentatriver[i*54+1+36],pentatriver[i*54+6+36],pentatriver[i*54+7+36],pentatriver[i*54+12+36],pentatriver[i*54+13+36])&&(selected!=4||start!=i)){
+					b=true;
+					selected2=4;
+					End=i;
+					break;
+				}
+			}
+		}
+
+
+		if(selected2!=-1){
+			int selected3=(selected+selected2+1)%5;
+			int er[2]={start,End};
+			int se[2]={selected,selected2};
+			cout<<"dtd"<<endl;
+			if(selected==selected2&&start<End)--er[1];
+			for(int i=0;i<2;++i){
+				switch(se[i])
+				{
+				case 0:
+				pointver.erase(pointver.begin()+er[i]*6,pointver.begin()+er[i]*6+6);
+				pointverb.erase(pointverb.begin()+er[i]);
+				pointveri.erase(pointveri.begin()+er[i]);
+				break;
+				case 1:
+				linever.erase(linever.begin()+er[i]*12,linever.begin()+er[i]*12+12);
+				lineverb.erase(lineverb.begin()+er[i]);
+				lineveri.erase(lineveri.begin()+er[i]);
+				break;
+				case 2:
+				triver1.erase(triver1.begin()+er[i]*18,triver1.begin()+er[i]*18+18);
+				triver1b.erase(triver1b.begin()+er[i]);
+				triver1i.erase(triver1i.begin()+er[i]);
+				break;
+				case 3:
+				twotriver.erase(twotriver.begin()+er[i]*36,twotriver.begin()+er[i]*36+36);
+				twotriverb.erase(twotriverb.begin()+er[i]);
+				twotriveri.erase(twotriveri.begin()+er[i]);
+				break;
+				case 4:
+				pentatriver.erase(pentatriver.begin()+er[i]*54,pentatriver.begin()+er[i]*54+54);
+				pentatriverb.erase(pentatriverb.begin()+er[i]);
+				pentatriveri.erase(pentatriveri.begin()+er[i]);
+				break;
+				}
+			}
+
+			switch(selected3){
+
+			case 0:
+			{
+				float point[]={
+					tranformx(x),tranformy(y),0.0f,rcolor(gen),rcolor(gen),rcolor(gen)
+				};
+				pointver.insert(pointver.end(),point,point+6);
+				pointverb.push_back(true);
+				pointveri.push_back(0);
+				break;
+			}
+			case 1:
+			{
+				float line[]={
+					tranformx(x),tranformy(y),0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
+					tranformx(x)+0.1f,tranformy(y)+0.1f,0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
+
+				};
+				linever.insert(linever.end(),line,line+12);
+				lineverb.push_back(true);
+				lineveri.push_back(0);
+				break;
+			}
+			case 2:
+			{
+				float triangle[]={
+					tranformx(x),tranformy(y),0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
+					tranformx(x)-0.1f,tranformy(y)-0.2f,0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
+					tranformx(x)+0.1f,tranformy(y)-0.2f,0.0f,rcolor(gen),rcolor(gen),rcolor(gen)
+				};
+				triver1.insert(triver1.end(),triangle,triangle+18);
+				triver1b.push_back(true);
+				triver1i.push_back(0);
+				break;
+
+			}
+			case 3:
+			{
+				float rantangle[]={
+					tranformx(x),tranformy(y),0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
+					tranformx(x)-0.2f,tranformy(y),0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
+					tranformx(x)-0.2f,tranformy(y)-0.2f,0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
+
+					tranformx(x),tranformy(y),0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
+					tranformx(x)-0.2f,tranformy(y)-0.2f,0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
+					tranformx(x),tranformy(y)-0.2f,0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
+				};
+				twotriver.insert(twotriver.end(),rantangle,rantangle+36);
+				twotriverb.push_back(true);
+				twotriveri.push_back(0);
+				break;
+
+			}
+			case 4:
+			{
+				float pentagon[]={
+					tranformx(x)-0.1f,tranformy(y)+0.1f,0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
+					tranformx(x)-0.2f,tranformy(y),0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
+					tranformx(x),tranformy(y),0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
+					tranformx(x),tranformy(y),0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
+					tranformx(x)-0.2f,tranformy(y),0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
+					tranformx(x)-0.2f,tranformy(y)-0.2f,0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
+					tranformx(x),tranformy(y),0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
+					tranformx(x)-0.2f,tranformy(y)-0.2f,0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
+					tranformx(x),tranformy(y)-0.2f,0.0f,rcolor(gen),rcolor(gen),rcolor(gen)
+				};
+				pentatriver.insert(pentatriver.end(),pentagon,pentagon+54);
+				pentatriverb.push_back(true);
+				pentatriveri.push_back(0);
+				break;
+			}
+			}
+		}
+
+		selected=-1;
 	}
 	glutPostRedisplay ();
 
@@ -520,19 +834,243 @@ void Mouse (int button,int state,int x,int y)
 void Motion (int x,int y)
 {
 	if(left_mouse){
+		switch(selected)
+		{
+		case 0:
+		pointver[start*6 + 0] = tranformx(x);
+		pointver[start*6 + 1] = tranformy(y);
+		break;
 
+		case 1:
+		{
+			float x1 = linever[start*12 + 6] - linever[start*12 + 0];
+			float y1 = linever[start*12 + 7] - linever[start*12 + 1];
+
+			linever[start*12 + 0] = tranformx(x);
+			linever[start*12 + 1] = tranformy(y);
+
+			linever[start*12 + 6] = tranformx(x) + x1;
+			linever[start*12 + 7] = tranformy(y) + y1;
+		}
+		break;
+
+		case 2:
+		{
+			float x1 = triver1[start*18 + 6] - triver1[start*18 + 0];
+			float y1 = triver1[start*18 + 7] - triver1[start*18 + 1];
+			float x2 = triver1[start*18 + 12] - triver1[start*18 + 0];
+			float y2 = triver1[start*18 + 13] - triver1[start*18 + 1];
+
+			triver1[start*18 + 0] = tranformx(x);
+			triver1[start*18 + 1] = tranformy(y);
+
+			triver1[start*18 + 6] = tranformx(x) + x1;
+			triver1[start*18 + 7] = tranformy(y) + y1;
+			triver1[start*18 + 12] = tranformx(x) + x2;
+			triver1[start*18 + 13] = tranformy(y) + y2;
+		}
+		break;
+
+		case 3:
+		{
+			float x1[6],y1[6];
+			for(int i=0;i<6;i++){
+				x1[i] = twotriver[start*36 + i*6 + 0] - twotriver[start*36 + 0];
+				y1[i] = twotriver[start*36 + i*6 + 1] - twotriver[start*36 + 1];
+			}
+			for(int i=0;i<6;i++){
+				twotriver[start*36 + i*6 + 0] = tranformx(x) + x1[i];
+				twotriver[start*36 + i*6 + 1] = tranformy(y) + y1[i];
+			}
+		}
+		break;
+
+		case 4:
+		{
+			float x1[9],y1[9];
+			for(int i=0;i<9;i++){
+				x1[i] = pentatriver[start*54 + i*6 + 0] - pentatriver[start*54 + 0];
+				y1[i] = pentatriver[start*54 + i*6 + 1] - pentatriver[start*54 + 1];
+			}
+			for(int i=0;i<9;i++){
+				pentatriver[start*54 + i*6 + 0] = tranformx(x) + x1[i];
+				pentatriver[start*54 + i*6 + 1] = tranformy(y) + y1[i];
+			}
+		}
+		break;
+		}
+		glutPostRedisplay();
 	}
-
 }
 int glutGetModifiers (){ //컨트롤 알트 시프트 확인
 	return 0;
 
 }
-void TimerFunction (int value)
+void TimerFunction(int value)
 {
+	float move_speed = 0.005f;
 
-	glutPostRedisplay ();
-	glutTimerFunc (10,TimerFunction,1);
+	for(int i = 0; i < pointverb.size(); ++i) {
+		if(pointverb[i]) { 
+			int dir = pointveri[i]; 
+			float dx = 0,dy = 0;
+
+			if(dir == 0)      {
+				dx = move_speed; dy = move_speed;
+			} else if(dir == 1) {
+				dx = -move_speed; dy = move_speed;
+			} else if(dir == 2) {
+				dx = -move_speed; dy = -move_speed;
+			} else               {
+				dx = move_speed; dy = -move_speed;
+			}
+
+			float& px = pointver[i * 6];
+			float& py = pointver[i * 6 + 1];
+
+			if((px + dx > 1.0f && dx > 0) || (px + dx < -1.0f && dx < 0) || (py + dy > 1.0f && dy > 0) || (py + dy < -1.0f && dy < 0)) {
+				dir = (dir + 1) % 4;
+			}
+
+			px += dx;
+			py += dy;
+		}
+	}
+
+	// 2. 선(Line) 애니메이션
+	for(int i = 0; i < lineverb.size(); ++i) {
+		if(lineverb[i]) {
+			int& dir = lineveri[i];
+			float dx = 0,dy = 0;
+			if(dir == 0)      {
+				dx = move_speed; dy = move_speed;
+			} else if(dir == 1) {
+				dx = -move_speed; dy = move_speed;
+			} else if(dir == 2) {
+				dx = -move_speed; dy = -move_speed;
+			} else               {
+				dx = move_speed; dy = -move_speed;
+			}
+
+			float minX = std::min(linever[i * 12 + 0],linever[i * 12 + 6]);
+			float maxX = std::max(linever[i * 12 + 0],linever[i * 12 + 6]);
+			float minY = std::min(linever[i * 12 + 1],linever[i * 12 + 7]);
+			float maxY = std::max(linever[i * 12 + 1],linever[i * 12 + 7]);
+
+			if((maxX + dx > 1.0f && dx > 0) || (minX + dx < -1.0f && dx < 0) || (maxY + dy > 1.0f && dy > 0) || (minY + dy < -1.0f && dy < 0)) {
+				dir = (dir + 1) % 4;
+			}
+
+			for(int v = 0; v < 2; ++v) {
+				linever[i * 12 + v * 6 + 0] += dx;
+				linever[i * 12 + v * 6 + 1] += dy;
+			}
+		}
+	}
+
+	// 3. 삼각형(Triangle) 애니메이션
+	for(int i = 0; i < triver1b.size(); ++i) {
+		if(triver1b[i]) {
+			int& dir = triver1i[i];
+			float dx = 0,dy = 0;
+			if(dir == 0)      {
+				dx = move_speed; dy = move_speed;
+			} else if(dir == 1) {
+				dx = -move_speed; dy = move_speed;
+			} else if(dir == 2) {
+				dx = -move_speed; dy = -move_speed;
+			} else               {
+				dx = move_speed; dy = -move_speed;
+			}
+
+			float v_x[] = {triver1[i * 18 + 0],triver1[i * 18 + 6],triver1[i * 18 + 12]};
+			float v_y[] = {triver1[i * 18 + 1],triver1[i * 18 + 7],triver1[i * 18 + 13]};
+			float minX = *std::min_element(v_x,v_x + 3);
+			float maxX = *std::max_element(v_x,v_x + 3);
+			float minY = *std::min_element(v_y,v_y + 3);
+			float maxY = *std::max_element(v_y,v_y + 3);
+
+			if((maxX + dx > 1.0f && dx > 0) || (minX + dx < -1.0f && dx < 0) || (maxY + dy > 1.0f && dy > 0) || (minY + dy < -1.0f && dy < 0)) {
+				dir = (dir + 1) % 4;
+			}
+
+			for(int v = 0; v < 3; ++v) {
+				triver1[i * 18 + v * 6 + 0] += dx;
+				triver1[i * 18 + v * 6 + 1] += dy;
+			}
+		}
+	}
+
+	// 4. 사각형(Rectangle) 애니메이션
+	for(int i = 0; i < twotriverb.size(); ++i) {
+		if(twotriverb[i]) {
+			int& dir = twotriveri[i];
+			float dx = 0,dy = 0;
+			if(dir == 0)      {
+				dx = move_speed; dy = move_speed;
+			} else if(dir == 1) {
+				dx = -move_speed; dy = move_speed;
+			} else if(dir == 2) {
+				dx = -move_speed; dy = -move_speed;
+			} else               {
+				dx = move_speed; dy = -move_speed;
+			}
+
+			float minX = 1.0f,maxX = -1.0f,minY = 1.0f,maxY = -1.0f;
+			for(int v = 0; v < 6; ++v) {
+				minX = std::min(minX,twotriver[i * 36 + v * 6 + 0]);
+				maxX = std::max(maxX,twotriver[i * 36 + v * 6 + 0]);
+				minY = std::min(minY,twotriver[i * 36 + v * 6 + 1]);
+				maxY = std::max(maxY,twotriver[i * 36 + v * 6 + 1]);
+			}
+
+			if((maxX + dx > 1.0f && dx > 0) || (minX + dx < -1.0f && dx < 0) || (maxY + dy > 1.0f && dy > 0) || (minY + dy < -1.0f && dy < 0)) {
+				dir = (dir + 1) % 4;
+			}
+
+			for(int v = 0; v < 6; ++v) {
+				twotriver[i * 36 + v * 6 + 0] += dx;
+				twotriver[i * 36 + v * 6 + 1] += dy;
+			}
+		}
+	}
+
+	// 5. 오각형(Pentagon) 애니메이션
+	for(int i = 0; i < pentatriverb.size(); ++i) {
+		if(pentatriverb[i]) {
+			int& dir = pentatriveri[i];
+			float dx = 0,dy = 0;
+			if(dir == 0)      {
+				dx = move_speed; dy = move_speed;
+			} else if(dir == 1) {
+				dx = -move_speed; dy = move_speed;
+			} else if(dir == 2) {
+				dx = -move_speed; dy = -move_speed;
+			} else               {
+				dx = move_speed; dy = -move_speed;
+			}
+
+			float minX = 1.0f,maxX = -1.0f,minY = 1.0f,maxY = -1.0f;
+			for(int v = 0; v < 9; ++v) {
+				minX = std::min(minX,pentatriver[i * 54 + v * 6 + 0]);
+				maxX = std::max(maxX,pentatriver[i * 54 + v * 6 + 0]);
+				minY = std::min(minY,pentatriver[i * 54 + v * 6 + 1]);
+				maxY = std::max(maxY,pentatriver[i * 54 + v * 6 + 1]);
+			}
+
+			if((maxX + dx > 1.0f && dx > 0) || (minX + dx < -1.0f && dx < 0) || (maxY + dy > 1.0f && dy > 0) || (minY + dy < -1.0f && dy < 0)) {
+				dir = (dir + 1) % 4;
+			}
+
+			for(int v = 0; v < 9; ++v) {
+				pentatriver[i * 54 + v * 6 + 0] += dx;
+				pentatriver[i * 54 + v * 6 + 1] += dy;
+			}
+		}
+	}
+
+	glutPostRedisplay();
+	glutTimerFunc(10,TimerFunction,1);
 }
 GLchar ch[256]{};
 GLchar* filetobuf(const char *file)
