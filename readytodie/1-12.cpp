@@ -176,6 +176,11 @@ vector<float> llinever;
 
 array<int,4> mode={0,1,2,3};
 
+float color1[3] = {0.23f,0.81f,0.47f};
+float color2[3] = {0.92f,0.14f,0.66f};
+float color3[3] = {0.35f,0.59f,0.99f};
+float color4[3] = {0.77f,0.41f,0.12f};
+
 void updateVBO()
 {
 	// 1. 두 벡터를 합칠 임시 벡터 생성
@@ -183,9 +188,6 @@ void updateVBO()
 	comver.insert(comver.end(),pointver.begin(),pointver.end());
 	comver.insert(comver.end(),linever.begin(),linever.end());
 	comver.insert(comver.end(),triver1.begin(),triver1.end());
-	comver.insert(comver.end(),triver2.begin(),triver2.end());
-	comver.insert(comver.end(),triver3.begin(),triver3.end());
-	comver.insert(comver.end(),triver4.begin(),triver4.end());
 	comver.insert(comver.end(),twotriver.begin(),twotriver.end());
 	comver.insert(comver.end(),pentatriver.begin(),pentatriver.end());
 	comver.insert(comver.end(),llinever.begin(),llinever.end());
@@ -197,6 +199,7 @@ void updateVBO()
 		glBufferData(GL_ARRAY_BUFFER,sizeof(GLfloat) * comver.size(),comver.data(),GL_DYNAMIC_DRAW);
 	}
 }
+
 vector<dtd> art;
 FRECT rect[4]={0,0,1.0f,1.0f,
 -1.0f,0,0,1.0f,
@@ -204,6 +207,8 @@ FRECT rect[4]={0,0,1.0f,1.0f,
 0,-1.0f,1.0f,0};
 void Initdata()
 {
+	
+
 	float lline[]={
 		0,1.0f,0.0f,1.0f,1.0f,1.0f,
 		0,-1.0f,0.0f,1.0f,1.0f,1.0f,
@@ -213,61 +218,127 @@ void Initdata()
 	llinever.insert(llinever.end(),lline,lline+24);
 	//float inr=rcolor(gen),ingr=rcolor(gen),inb=rcolor(gen);
 	float line[]={
-		0.4f,0.4f,0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
-		0.6f,0.4f,0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
+		0.4f,0.4f,0.0f,color1[0],color1[1],color1[2],
+		0.6f,0.4f,0.0f,color1[0],color1[1],color1[2],
 
-		-0.4f,0.4f,0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
-		-0.6f,0.4f,0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
+		-0.4f,0.4f,0.0f,color2[0],color2[1],color2[2],
+		-0.6f,0.4f,0.0f,color2[0],color2[1],color2[2],
 
-		-0.4f,-0.6f,0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
-		-0.6f,-0.6f,0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
+		-0.4f,-0.6f,0.0f,color3[0],color3[1],color3[2],
+		-0.6f,-0.6f,0.0f,color3[0],color3[1],color3[2],
 
-		0.4f,-0.6f,0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
-		0.6f,-0.6f,0.0f,rcolor(gen),rcolor(gen),rcolor(gen)
+		0.4f,-0.6f,0.0f,color4[0],color4[1],color4[2],
+		0.6f,-0.6f,0.0f,color4[0],color4[1],color4[2]
 	};
 	linever.insert(linever.end(),line,line+48);
 
 	float triangle[]={
-		0.5f,0.6f,0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
-		0.4f,0.4f,0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
-		0.6f,0.4f,0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
+		0.5f,0.6f,0.0f,color1[0],color1[1],color1[2],
+		0.4f,0.4f,0.0f,color1[0],color1[1],color1[2],
+		0.6f,0.4f,0.0f,color1[0],color1[1],color1[2],
 
-		-0.5f,0.6f,0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
-		-0.4f,0.4f,0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
-		-0.6f,0.4f,0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
+		-0.5f,0.6f,0.0f,color2[0],color2[1],color2[2],
+		-0.4f,0.4f,0.0f,color2[0],color2[1],color2[2],
+		-0.6f,0.4f,0.0f,color2[0],color2[1],color2[2],
 
-		-0.5f,-0.4f,0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
-		-0.4f,-0.6f,0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
-		-0.6f,-0.6f,0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
+		-0.5f,-0.4f,0.0f,color3[0],color3[1],color3[2],
+		-0.4f,-0.6f,0.0f,color3[0],color3[1],color3[2],
+		-0.6f,-0.6f,0.0f,color3[0],color3[1],color3[2],
 
-		0.5f,-0.4f,0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
-		0.4f,-0.6f,0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
-		0.6f,-0.6f,0.0f,rcolor(gen),rcolor(gen),rcolor(gen)
+		0.5f,-0.4f,0.0f,color4[0],color4[1],color4[2],
+		0.4f,-0.6f,0.0f,color4[0],color4[1],color4[2],
+		0.6f,-0.6f,0.0f,color4[0],color4[1],color4[2]
 	};
 	triver1.insert(triver1.end(),triangle,triangle+72);
 
 	float rantangle[]={
-		0.6f,0.6f,0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
-		0.4f,0.6f,0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
-		0.4f,0.4f,0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
-		0.6f,0.4f,0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
+		0.6f,0.6f,0.0f,color1[0],color1[1],color1[2],
+		0.4f,0.6f,0.0f,color1[0],color1[1],color1[2],
+		0.4f,0.4f,0.0f,color1[0],color1[1],color1[2],
 
-		-0.6f,0.6f,0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
-		-0.4f,0.6f,0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
-		-0.4f,0.4f,0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
-		-0.6f,0.4f,0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
+		0.6f,0.6f,0.0f,color1[0],color1[1],color1[2],
+		0.4f,0.4f,0.0f,color1[0],color1[1],color1[2],
+		0.6f,0.4f,0.0f,color1[0],color1[1],color1[2],
 
-		-0.6f,-0.6f,0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
-		-0.4f,-0.6f,0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
-		-0.4f,-0.4f,0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
-		-0.6f,-0.4f,0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
+		-0.6f,0.6f,0.0f,color2[0],color2[1],color2[2],
+		-0.4f,0.6f,0.0f,color2[0],color2[1],color2[2],
+		-0.4f,0.4f,0.0f,color2[0],color2[1],color2[2],
 
-		0.6f,-0.6f,0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
-		0.4f,-0.6f,0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
-		0.4f,-0.4f,0.0f,rcolor(gen),rcolor(gen),rcolor(gen),
-		0.6f,-0.4f,0.0f,rcolor(gen),rcolor(gen),rcolor(gen)
+		-0.6f,0.6f,0.0f,color2[0],color2[1],color2[2],
+		-0.4f,0.4f,0.0f,color2[0],color2[1],color2[2],
+		-0.6f,0.4f,0.0f,color2[0],color2[1],color2[2],
+
+		-0.6f,-0.6f,0.0f,color3[0],color3[1],color3[2],
+		-0.4f,-0.6f,0.0f,color3[0],color3[1],color3[2],
+		-0.4f,-0.4f,0.0f,color3[0],color3[1],color3[2],
+
+		-0.6f,-0.6f,0.0f,color3[0],color3[1],color3[2],
+		-0.4f,-0.4f,0.0f,color3[0],color3[1],color3[2],
+		-0.6f,-0.4f,0.0f,color3[0],color3[1],color3[2],
+
+		0.6f,-0.6f,0.0f,color4[0],color4[1],color4[2],
+		0.4f,-0.6f,0.0f,color4[0],color4[1],color4[2],
+		0.4f,-0.4f,0.0f,color4[0],color4[1],color4[2],
+
+		0.6f,-0.6f,0.0f,color4[0],color4[1],color4[2],
+		0.4f,-0.4f,0.0f,color4[0],color4[1],color4[2],
+		0.6f,-0.4f,0.0f,color4[0],color4[1],color4[2]
+
+		
 	};
-	twotriver.insert(twotriver.end(),rantangle,rantangle+72);
+	twotriver.insert(twotriver.end(),rantangle,rantangle+144);
+
+	float pentagon[]{
+
+		0.5f,0.7f,0.0f,color1[0],color1[1],color1[2],
+		0.4f,0.6f,0.0f,color1[0],color1[1],color1[2],
+		0.6f,0.6f,0.0f,color1[0],color1[1],color1[2],
+
+		0.6f,0.6f,0.0f,color1[0],color1[1],color1[2],
+		0.4f,0.6f,0.0f,color1[0],color1[1],color1[2],
+		0.4f,0.4f,0.0f,color1[0],color1[1],color1[2],
+
+		0.6f,0.6f,0.0f,color1[0],color1[1],color1[2],
+		0.4f,0.4f,0.0f,color1[0],color1[1],color1[2],
+		0.6f,0.4f,0.0f,color1[0],color1[1],color1[2],
+
+		-0.5f,0.7f,0.0f,color2[0],color2[1],color2[2],
+		-0.4f,0.6f,0.0f,color2[0],color2[1],color2[2],
+		-0.6f,0.6f,0.0f,color2[0],color2[1],color2[2],
+
+		-0.6f,0.6f,0.0f,color2[0],color2[1],color2[2],
+		-0.4f,0.6f,0.0f,color2[0],color2[1],color2[2],
+		-0.4f,0.4f,0.0f,color2[0],color2[1],color2[2],
+
+		-0.6f,0.6f,0.0f,color2[0],color2[1],color2[2],
+		-0.4f,0.4f,0.0f,color2[0],color2[1],color2[2],
+		-0.6f,0.4f,0.0f,color2[0],color2[1],color2[2],
+
+		-0.5f,-0.7f,0.0f,color3[0],color3[1],color3[2],
+		-0.4f,-0.6f,0.0f,color3[0],color3[1],color3[2],
+		-0.6f,-0.6f,0.0f,color3[0],color3[1],color3[2],
+
+		-0.6f,-0.6f,0.0f,color3[0],color3[1],color3[2],
+		-0.4f,-0.6f,0.0f,color3[0],color3[1],color3[2],
+		-0.4f,-0.4f,0.0f,color3[0],color3[1],color3[2],
+
+		-0.6f,-0.6f,0.0f,color3[0],color3[1],color3[2],
+		-0.4f,-0.4f,0.0f,color3[0],color3[1],color3[2],
+		-0.6f,-0.4f,0.0f,color3[0],color3[1],color3[2],
+
+		0.5f,-0.7f,0.0f,color4[0],color4[1],color4[2],
+		0.4f,-0.6f,0.0f,color4[0],color4[1],color4[2],
+		0.6f,-0.6f,0.0f,color4[0],color4[1],color4[2],
+
+		0.6f,-0.6f,0.0f,color4[0],color4[1],color4[2],
+		0.4f,-0.6f,0.0f,color4[0],color4[1],color4[2],
+		0.4f,-0.4f,0.0f,color4[0],color4[1],color4[2],
+
+		0.6f,-0.6f,0.0f,color4[0],color4[1],color4[2],
+		0.4f,-0.4f,0.0f,color4[0],color4[1],color4[2],
+		0.6f,-0.4f,0.0f,color4[0],color4[1],color4[2]
+	};
+	pentatriver.insert(pentatriver.end(),pentagon,pentagon+216);
 
 }
 
@@ -376,21 +447,6 @@ GLvoid drawScene () //--- 콜백 함수: 그리기 콜백 함수
 			glDrawArrays(GL_TRIANGLES,offset,3);
 			offset += 3;
 		}
-	}
-	if(triangleCount2 > 0)
-	{
-		glDrawArrays(GL_TRIANGLES,offset,triangleCount2);
-		offset += triangleCount2;
-	}
-	if(triangleCount3 > 0)
-	{
-		glDrawArrays(GL_TRIANGLES,offset,triangleCount3);
-		offset += triangleCount3;
-	}
-	if(triangleCount4 > 0)
-	{
-		glDrawArrays(GL_TRIANGLES,offset,triangleCount4);
-		offset += triangleCount4;
 	}
 	// 4. 사각형 그리기
 	if(rectangleCount > 0)
