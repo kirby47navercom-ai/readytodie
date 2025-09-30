@@ -185,17 +185,18 @@ float color1[3] = {0.23f,0.81f,0.47f};
 float color2[3] = {0.92f,0.14f,0.66f};
 float color3[3] = {0.35f,0.59f,0.99f};
 float color4[3] = {0.77f,0.41f,0.12f};
+float color5[3] = {0.47f,0.71f,0.62f};
 
 void updateVBO()
 {
 	// 1. 두 벡터를 합칠 임시 벡터 생성
 	vector<GLfloat> comver;
+	comver.insert(comver.end(),llinever.begin(),llinever.end());
 	comver.insert(comver.end(),pointver.begin(),pointver.end());
 	comver.insert(comver.end(),linever.begin(),linever.end());
 	comver.insert(comver.end(),triver1.begin(),triver1.end());
 	comver.insert(comver.end(),twotriver.begin(),twotriver.end());
 	comver.insert(comver.end(),pentatriver.begin(),pentatriver.end());
-	comver.insert(comver.end(),llinever.begin(),llinever.end());
 
 	// 2. 합쳐진 데이터로 VBO를 새로 업데이트
 	if(!comver.empty())
@@ -241,8 +242,8 @@ void Initdata()
 		0.4f,-0.6f,0.0f,color4[0],color4[1],color4[2],
 		0.6f,-0.6f,0.0f,color4[0],color4[1],color4[2],
 
-		0.2f,0.0f,0.0f,color4[0],color4[1],color4[2],
-		0.3f,0.0f,0.0f,color4[0],color4[1],color4[2],
+		-0.1f*3.0f,0.0f*3.0f,0.0f,color5[0],color5[1],color5[2],
+		0.1f*3.0f,0.0f*3.0f,0.0f,color5[0],color5[1],color5[2],
 	};
 	linever.insert(linever.end(),line,line+60);
 	clinever.insert(clinever.end(),line,line+60);
@@ -264,9 +265,9 @@ void Initdata()
 		0.4f,-0.6f,0.0f,color4[0],color4[1],color4[2],
 		0.6f,-0.6f,0.0f,color4[0],color4[1],color4[2],
 
-		0.0f,0.2f,0.0f,color4[0],color4[1],color4[2],
-		-0.1f,0.0f,0.0f,color4[0],color4[1],color4[2],
-		0.1f,0.0f,0.0f,color4[0],color4[1],color4[2],
+		0.0f*3.0f,0.2f*3.0f,0.0f,color5[0],color5[1],color5[2],
+		-0.1f*3.0f,0.0f*3.0f,0.0f,color5[0],color5[1],color5[2],
+		0.1f*3.0f,0.0f*3.0f,0.0f,color5[0],color5[1],color5[2],
 	};
 	triver1.insert(triver1.end(),triangle,triangle+90);
 	ctriver1.insert(ctriver1.end(),triangle,triangle+90);
@@ -304,13 +305,13 @@ void Initdata()
 		0.4f,-0.4f,0.0f,color4[0],color4[1],color4[2],
 		0.6f,-0.4f,0.0f,color4[0],color4[1],color4[2],
 
-		0.1f,0.0f,0.0f,color4[0],color4[1],color4[2],
-		-0.1f,0.0f,0.0f,color4[0],color4[1],color4[2],
-		-0.1f,0.2f,0.0f,color4[0],color4[1],color4[2],
+		0.1f*3.0f,0.2f*3.0f,0.0f,color5[0],color5[1],color5[2],
+		-0.1f*3.0f,0.2f*3.0f,0.0f,color5[0],color5[1],color5[2],
+		-0.1f*3.0f,0.0f*3.0f,0.0f,color5[0],color5[1],color5[2],
 
-		0.1f,0.0f,0.0f,color4[0],color4[1],color4[2],
-		-0.1f,0.2f,0.0f,color4[0],color4[1],color4[2],
-		0.1f,0.2f,0.0f,color4[0],color4[1],color4[2]
+		0.1f*3.0f,0.2f*3.0f,0.0f,color5[0],color5[1],color5[2],
+		-0.1f*3.0f,0.0f*3.0f,0.0f,color5[0],color5[1],color5[2],
+		0.1f*3.0f,0.0f*3.0f,0.0f,color5[0],color5[1],color5[2]
 		
 	};
 	twotriver.insert(twotriver.end(),rantangle,rantangle+180);
@@ -366,18 +367,18 @@ void Initdata()
 		0.3f,-0.4f,0.0f,color4[0],color4[1],color4[2],
 		0.7f,-0.4f,0.0f,color4[0],color4[1],color4[2],
 
-		0,0.3f,0.0f,color1[0],color1[1],color1[2],
-		-0.2f,0.2f,0.0f,color1[0],color1[1],color1[2],
-		0.2f,0.2f,0.0f,color1[0],color1[1],color1[2],
+		0*3.0f,0.3f*3.0f,0.0f,color5[0],color5[1],color5[2],
+		-0.2f*3.0f,0.2f*3.0f,0.0f,color5[0],color5[1],color5[2],
+		0.2f*3.0f,0.2f*3.0f,0.0f,color5[0],color5[1],color5[2],
 
 
-		0.1f,0.0f,0.0f,color4[0],color4[1],color4[2],
-		-0.1f,0.0f,0.0f,color4[0],color4[1],color4[2],
-		-0.1f,0.2f,0.0f,color4[0],color4[1],color4[2],
+		0.1f*3.0f,0.0f*3.0f,0.0f,color5[0],color5[1],color5[2],
+		-0.1f*3.0f,0.0f*3.0f,0.0f,color5[0],color5[1],color5[2],
+		-0.1f*3.0f,0.2f*3.0f,0.0f,color5[0],color5[1],color5[2],
 
-		0.1f,0.0f,0.0f,color4[0],color4[1],color4[2],
-		-0.1f,0.2f,0.0f,color4[0],color4[1],color4[2],
-		0.1f,0.2f,0.0f,color4[0],color4[1],color4[2]
+		0.1f*3.0f,0.0f*3.0f,0.0f,color5[0],color5[1],color5[2],
+		-0.1f*3.0f,0.2f*3.0f,0.0f,color5[0],color5[1],color5[2],
+		0.1f*3.0f,0.2f*3.0f,0.0f,color5[0],color5[1],color5[2]
 
 	};
 	pentatriver.insert(pentatriver.end(),pentagon,pentagon+270);
@@ -460,6 +461,15 @@ GLvoid drawScene () //--- 콜백 함수: 그리기 콜백 함수
 	glPointSize(10.0f);
 	int offset = 0;
 
+	// 6. 굵은 선 그리기
+	if(llineCount > 0)
+	{
+		glLineWidth(10.0f);
+		if(mode_==0)
+		glDrawArrays(GL_LINES,offset,llineCount);
+		glLineWidth(1.0f);
+		offset += llineCount;
+	}
 	// 1. 점 그리기
 	if(pointCount > 0)
 	{
@@ -472,9 +482,9 @@ GLvoid drawScene () //--- 콜백 함수: 그리기 콜백 함수
 	{
 
 		glLineWidth(1.0f);
-		if(mode_==0)
 		for(int i=0;i<4;++i){
 			if(mode[i]==0)
+				if(mode_==0)
 			glDrawArrays(GL_LINES,offset,2);
 			offset += 2;
 		}
@@ -487,9 +497,9 @@ GLvoid drawScene () //--- 콜백 함수: 그리기 콜백 함수
 	// 3. 삼각형 그리기
 	if(triangleCount1 > 0)
 	{
-		if(mode_==0)
 		for(int i=0;i<4;++i){
 			if(mode[i]==1)
+				if(mode_==0)
 			glDrawArrays(GL_TRIANGLES,offset,3);
 			offset += 3;
 		}
@@ -500,9 +510,10 @@ GLvoid drawScene () //--- 콜백 함수: 그리기 콜백 함수
 	// 4. 사각형 그리기
 	if(rectangleCount > 0)
 	{
-		if(mode_==0)
+		
 		for(int i=0;i<4;++i){
 			if(mode[i]==2)
+				if(mode_==0)
 				glDrawArrays(GL_TRIANGLES,offset,6);
 			offset += 6;
 		}
@@ -513,9 +524,10 @@ GLvoid drawScene () //--- 콜백 함수: 그리기 콜백 함수
 	// 5. 오각형 그리기
 	if(pentatriCount > 0)
 	{
-		if(mode_==0)
+		
 		for(int i=0;i<4;++i){
 			if(mode[i]==3)
+				if(mode_==0)
 				glDrawArrays(GL_TRIANGLES,offset,9);
 			offset += 9;
 		}
@@ -524,13 +536,6 @@ GLvoid drawScene () //--- 콜백 함수: 그리기 콜백 함수
 		offset += 9;
 	}
 	// 6. 굵은 선 그리기
-	if(llineCount > 0)
-	{
-		glLineWidth(10.0f);
-		glDrawArrays(GL_LINES,offset,llineCount);
-		glLineWidth(1.0f);
-		offset += llineCount;
-	}
 
 
 	//for(int i=0;i<pointver.size()/6;++i){
@@ -559,39 +564,36 @@ void Keyupboard(unsigned char key,int x,int y){
 }
 
 int time_[]={0,0,0,0};
+int mode__=0;
 void Keyboard(unsigned char key,int x,int y)
 {
-	
+	if(mode_==0)
 	switch(key) {
 		
 	case 'l':
 	animate=true;
 	for(int i=0;i<4;++i){
-		if(mode[i]==0&&check[i]==-1){
-			check[i]=0;
+		if(mode[i]==0){
+			
 			mode[i]=1;
-			triver1[i*18+1]=triver1[i*18+1]>0?0.4:-0.6;
-			mode_=1;
+			triver1[4*18+1]=0.0f*3.0;
+			mode_=2;
+			mode__=1;
 		}
 	}
 	break;
 	case 't':
 	animate=true;
 	for(int i=0;i<4;++i){
-		if(mode[i]==1&&check[i]==-1){
-			check[i]=1;
+		if(mode[i]==1){
+			
 			mode[i]=2;
-			if(twotriver[i*36]>0){
-				twotriver[i*36]=0.5f;
-				twotriver[i*36+6]=0.5f;
-				twotriver[i*36+18]=0.5f;
-			}
-			else
-			{
-				twotriver[i*36]=-0.5f;
-				twotriver[i*36+6]=-0.5f;
-				twotriver[i*36+18]=-0.5f;
-			}
+			mode_=3;
+			twotriver[4*36]=0.0f*3.0;
+			twotriver[4*36+6]=0.0f*3.0;
+			twotriver[4*36+18]=0.0f*3.0;
+			
+			mode__=2;
 
 		} 
 	}
@@ -599,39 +601,18 @@ void Keyboard(unsigned char key,int x,int y)
 	case 'r':
 	animate=true;
 	for(int i=0;i<4;++i){
-		if(mode[i]==2&&check[i]==-1){
-			check[i]=2;
+		if(mode[i]==2){
+			
 			mode[i]=3;
-			pentatriver[i*54+1]=pentatriver[i*54+1]>0?0.6:-0.4;
-			if(i==0){
-				pentatriver[i*54+6]=0.4f;
-				pentatriver[i*54+12]=0.6f;
-				pentatriver[i*54+18]=0.6f;
-				pentatriver[i*54+24]=0.4f;
-				pentatriver[i*54+36]=0.6f;
-			} 
-			else if(i==1){
-				pentatriver[i*54+6]=-0.4f;
-				pentatriver[i*54+12]=-0.6f;
-				pentatriver[i*54+18]=-0.6f;
-				pentatriver[i*54+24]=-0.4f;
-				pentatriver[i*54+36]=-0.6f;
-			}
-			else if(i==2){
-				pentatriver[i*54+6]=-0.4f;
-				pentatriver[i*54+12]=-0.6f;
-				pentatriver[i*54+30]=-0.4f;
-				pentatriver[i*54+42]=-0.4f;
-				pentatriver[i*54+48]=-0.6f;
-
-			} 
-			else if(i==3){
-				pentatriver[i*54+6]=0.4f;
-				pentatriver[i*54+12]=0.6f;
-				pentatriver[i*54+30]=0.4f;
-				pentatriver[i*54+42]=0.4f;
-				pentatriver[i*54+48]=0.6f;
-			}
+			mode_=4;
+			pentatriver[4*54+1]=0.2f*3.0;
+			
+			pentatriver[4*54+6]=-0.1f*3.0;
+			pentatriver[4*54+12]=0.1f*3.0;
+			pentatriver[4*54+18]=0.1f*3.0;
+			pentatriver[4*54+24]=-0.1f*3.0;
+			pentatriver[4*54+36]=0.1f*3.0;
+			mode__=3;
 			
 		}
 	}
@@ -639,9 +620,12 @@ void Keyboard(unsigned char key,int x,int y)
 	case 'p':
 	animate=true;
 	for(int i=0;i<4;++i){
-		if(mode[i]==3&&check[i]==-1){
-			check[i]=3;
-			time_[i]=0;
+		if(mode[i]==3){
+			
+			mode[i]=0;
+			mode_=4;
+			time_[0]=0;
+			mode__=4;
 		} 
 	}
 	break;
@@ -684,103 +668,87 @@ void TimerFunction (int value)
 {
 
 	if(animate){
-		for(int i=0;i<4;++i){
-			if(check[i]==0){
-				triver1[i*18+1]+=0.005f;
-				if((triver1[i*18+1]>0&&triver1[i*18+1]>=0.6f)||(triver1[i*18+1]<0&&triver1[i*18+1]>=-0.4f)){
+		
+			if(mode__==1){
+				triver1[4*18+1]+=0.005f;
+				triver1[4*18+6]-=0.005f;
+				triver1[4*18+7]-=0.005f;
+				triver1[4*18+12]+=0.005f;
+				triver1[4*18+13]-=0.005f;
+				
+
+				if(triver1[4*18+1]>=0.2f*3.0f){
+					triver1[4*18+1]=ctriver1[4*18+1];
+					mode_=0;
+					mode__=0;
+				}
+			}
+			if(mode__==2){
+				
+					twotriver[4*36]+=0.005f;
+					twotriver[4*36+6]-=0.005f;
+					twotriver[4*36+18]+=0.005f;
+					twotriver[4*36+13]-=0.005f;
+					twotriver[4*36+25]-=0.005f;
+					twotriver[4*36+31]-=0.005f;
+
+				
+				if(twotriver[4*36]>=0.1f*3.0f){
 					
-					triver1[i*18+1]=ctriver1[i*18+1];
-					check[i]=-1;
+					twotriver[4*36]=ctwotriver[4*36];
+					twotriver[4*36+6]=ctwotriver[4*36+6];
+					twotriver[4*36+18]=ctwotriver[4*36+18];
+					mode_=0;
+					mode__=0;
 				}
 			}
-			if(check[i]==1){
-				if(twotriver[i*36]>0){
-					twotriver[i*36]+=0.005f;
-					twotriver[i*36+6]-=0.005f;
-					twotriver[i*36+18]+=0.005f;
-				}
-				else
-				{
-					twotriver[i*36]-=0.005f;
-					twotriver[i*36+6]+=0.005f;
-					twotriver[i*36+18]-=0.005f;
-				}
-				if((twotriver[i*36]>0&&twotriver[i*36]>=0.6f)||(twotriver[i*36]<0&&twotriver[i*36]<=-0.6f)){
-					
-					twotriver[i*36]=ctwotriver[i*36];
-					twotriver[i*36+6]=ctwotriver[i*36+6];
-					twotriver[i*36+18]=ctwotriver[i*36+18];
-					check[i]=-1;
-				}
-			}
-			if(check[i]==2){
-				pentatriver[i*54+1]+=0.005f;
-				if(i==0){
-					pentatriver[i*54+6]-=0.005f;
-					pentatriver[i*54+12]+=0.005f;
-					pentatriver[i*54+18]+=0.005f;
-					pentatriver[i*54+24]-=0.005f;
-					pentatriver[i*54+36]+=0.005f;
-				} 
-				else if(i==1){
-					pentatriver[i*54+6]+=0.005f;
-					pentatriver[i*54+12]-=0.005f;
-					pentatriver[i*54+18]-=0.005f;
-					pentatriver[i*54+24]+=0.005f;
-					pentatriver[i*54+36]-=0.005f;
-				} 
-				else if(i==2){
-					pentatriver[i*54+6]+=0.005f;
-					pentatriver[i*54+12]-=0.005f;
-					pentatriver[i*54+30]+=0.005f;
-					pentatriver[i*54+42]+=0.005f;
-					pentatriver[i*54+48]-=0.005f;
-
-				} 
-				else if(i==3){
-					pentatriver[i*54+6]-=0.005f;
-					pentatriver[i*54+12]+=0.005f;
-					pentatriver[i*54+30]-=0.005f;
-					pentatriver[i*54+42]-=0.005f;
-					pentatriver[i*54+48]+=0.005f;
-				}
-				if((pentatriver[i*54+1]>0&&pentatriver[i*54+1]>=0.7f)||(pentatriver[i*54+1]<0&&pentatriver[i*54+1]>=-0.3f)){
-					pentatriver[i*54+1]=cpentatriver[i*54+1];
-					pentatriver[i*54+6]=cpentatriver[i*54+6];
-					pentatriver[i*54+12]=cpentatriver[i*54+12];
-					pentatriver[i*54+18]=cpentatriver[i*54+18];
-					pentatriver[i*54+24]=cpentatriver[i*54+24];
-					pentatriver[i*54+30]=cpentatriver[i*54+30];
-					pentatriver[i*54+36]=cpentatriver[i*54+36];
-					pentatriver[i*54+42]=cpentatriver[i*54+42];
-					pentatriver[i*54+48]=cpentatriver[i*54+48];
-					check[i]=-1;
+			if(mode__==3){
+				pentatriver[4*54+1]+=0.005f;
+			
+				pentatriver[4*54+6]-=0.005f;
+				pentatriver[4*54+12]+=0.005f;
+				pentatriver[4*54+30]-=0.005f;
+				pentatriver[4*54+42]-=0.005f;
+				pentatriver[4*54+48]+=0.005f;
+			
+				if(pentatriver[4*54+1]>=0.3f*3.0f){
+					pentatriver[4*54+1]=cpentatriver[4*54+1];
+					pentatriver[4*54+6]=cpentatriver[4*54+6];
+					pentatriver[4*54+12]=cpentatriver[4*54+12];
+					pentatriver[4*54+18]=cpentatriver[4*54+18];
+					pentatriver[4*54+24]=cpentatriver[4*54+24];
+					pentatriver[4*54+30]=cpentatriver[4*54+30];
+					pentatriver[4*54+36]=cpentatriver[4*54+36];
+					pentatriver[4*54+42]=cpentatriver[4*54+42];
+					pentatriver[4*54+48]=cpentatriver[4*54+48];
+					mode_=0;
+					mode__=0;
 				}
 			}
-			if(check[i]==3){
-					pentatriver[i*54 + 1] += (((pentatriver[i*54 + 42 + 1] + pentatriver[i*54 + 48 + 1]) / 2.0f) - pentatriver[i*54 + 1]) * 0.05f;
-					pentatriver[i*54 + 19] += (((pentatriver[i*54 + 48 + 1] + pentatriver[i*54 + 0 + 1]) / 2.0f) - pentatriver[i*54 + 19]) * 0.05f;
-					pentatriver[i*54 + 37] += (((pentatriver[i*54 + 0 + 1] + pentatriver[i*54 + 42 + 1]) / 2.0f) - pentatriver[i*54 + 37]) * 0.05f;
-					pentatriver[i*54 + 7]  += (((pentatriver[i*54 + 1] + pentatriver[i*54 + 19]) / 2.0f) - pentatriver[i*54 + 7]) * 0.05f;
-					pentatriver[i*54 + 13] += (((pentatriver[i*54 + 19] + pentatriver[i*54 + 37]) / 2.0f) - pentatriver[i*54 + 13]) * 0.05f;
-					pentatriver[i*54 + 25] += (((pentatriver[i*54 + 37] + pentatriver[i*54 + 1]) / 2.0f) - pentatriver[i*54 + 25]) * 0.05f;
-					pentatriver[i*54 + 31] += (((pentatriver[i*54 + 1] + pentatriver[i*54 + 37]) / 2.0f) - pentatriver[i*54 + 31]) * 0.05f;
-					++time_[i];
-					if(time_[i]==130){
-						pentatriver[i*54 + 1] = cpentatriver[i*54 + 1];
-						pentatriver[i*54 + 19] = cpentatriver[i*54 + 19];
-						pentatriver[i*54 + 37] = cpentatriver[i*54 + 37];
-						pentatriver[i*54 + 7] = cpentatriver[i*54 + 7];
-						pentatriver[i*54 + 13] = cpentatriver[i*54 + 13];
-						pentatriver[i*54 + 25] = cpentatriver[i*54 + 25];
-						pentatriver[i*54 + 31] = cpentatriver[i*54 + 31];
-						mode[i]=0;
-						check[i]=-1;
-					}
+			if(mode__==4){
+				pentatriver[4*54 + 1] += (((pentatriver[4*54 + 42 + 1] + pentatriver[4*54 + 48 + 1]) / 2.0f) - pentatriver[4*54 + 1]) * 0.05f*3.0;
+				pentatriver[4*54 + 19] += (((pentatriver[4*54 + 48 + 1] + pentatriver[4*54 + 0 + 1]) / 2.0f) - pentatriver[4*54 + 19]) * 0.05f*3.0;
+				pentatriver[4*54 + 37] += (((pentatriver[4*54 + 0 + 1] + pentatriver[4*54 + 42 + 1]) / 2.0f) - pentatriver[4*54 + 37]) * 0.05f*3.0;
+				pentatriver[4*54 + 7]  += (((pentatriver[4*54 + 1] + pentatriver[4*54 + 19]) / 2.0f) - pentatriver[4*54 + 7]) * 0.05f*3.0;
+				pentatriver[4*54 + 13] += (((pentatriver[4*54 + 19] + pentatriver[4*54 + 37]) / 2.0f) - pentatriver[4*54 + 13]) * 0.05f*3.0;
+				pentatriver[4*54 + 25] += (((pentatriver[4*54 + 37] + pentatriver[4*54 + 1]) / 2.0f) - pentatriver[4*54 + 25]) * 0.05f*3.0;
+				pentatriver[4*54 + 31] += (((pentatriver[4*54 + 1] + pentatriver[4*54 + 37]) / 2.0f) - pentatriver[4*54 + 31]) * 0.05f*3.0;
+				++time_[0];
+				if(time_[0]==130){
+					pentatriver[4*54 + 1] = cpentatriver[4*54 + 1];
+					pentatriver[4*54 + 19] = cpentatriver[4*54 + 19];
+					pentatriver[4*54 + 37] = cpentatriver[4*54 + 37];
+					pentatriver[4*54 + 7] = cpentatriver[4*54 + 7];
+					pentatriver[4*54 + 13] = cpentatriver[4*54 + 13];
+					pentatriver[4*54 + 25] = cpentatriver[4*54 + 25];
+					pentatriver[4*54 + 31] = cpentatriver[4*54 + 31];
+					mode_=0;
+					mode__=0;
+				}
 
 			}
 
-		}
+		
 	}
 	glutPostRedisplay ();
 	glutTimerFunc (10,TimerFunction,1);
