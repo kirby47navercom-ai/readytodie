@@ -239,10 +239,13 @@ void Initdata()
 		-0.6f,-0.6f,0.0f,color3[0],color3[1],color3[2],
 
 		0.4f,-0.6f,0.0f,color4[0],color4[1],color4[2],
-		0.6f,-0.6f,0.0f,color4[0],color4[1],color4[2]
+		0.6f,-0.6f,0.0f,color4[0],color4[1],color4[2],
+
+		0.2f,0.0f,0.0f,color4[0],color4[1],color4[2],
+		0.3f,0.0f,0.0f,color4[0],color4[1],color4[2],
 	};
-	linever.insert(linever.end(),line,line+48);
-	clinever.insert(clinever.end(),line,line+48);
+	linever.insert(linever.end(),line,line+60);
+	clinever.insert(clinever.end(),line,line+60);
 
 	float triangle[]={
 		0.5f,0.6f,0.0f,color1[0],color1[1],color1[2],
@@ -259,10 +262,14 @@ void Initdata()
 
 		0.5f,-0.4f,0.0f,color4[0],color4[1],color4[2],
 		0.4f,-0.6f,0.0f,color4[0],color4[1],color4[2],
-		0.6f,-0.6f,0.0f,color4[0],color4[1],color4[2]
+		0.6f,-0.6f,0.0f,color4[0],color4[1],color4[2],
+
+		0.0f,0.2f,0.0f,color4[0],color4[1],color4[2],
+		-0.1f,0.0f,0.0f,color4[0],color4[1],color4[2],
+		0.1f,0.0f,0.0f,color4[0],color4[1],color4[2],
 	};
-	triver1.insert(triver1.end(),triangle,triangle+72);
-	ctriver1.insert(ctriver1.end(),triangle,triangle+72);
+	triver1.insert(triver1.end(),triangle,triangle+90);
+	ctriver1.insert(ctriver1.end(),triangle,triangle+90);
 
 	float rantangle[]={
 		0.6f,0.6f,0.0f,color1[0],color1[1],color1[2],
@@ -295,12 +302,19 @@ void Initdata()
 
 		0.6f,-0.6f,0.0f,color4[0],color4[1],color4[2],
 		0.4f,-0.4f,0.0f,color4[0],color4[1],color4[2],
-		0.6f,-0.4f,0.0f,color4[0],color4[1],color4[2]
+		0.6f,-0.4f,0.0f,color4[0],color4[1],color4[2],
 
+		0.1f,0.0f,0.0f,color4[0],color4[1],color4[2],
+		-0.1f,0.0f,0.0f,color4[0],color4[1],color4[2],
+		-0.1f,0.2f,0.0f,color4[0],color4[1],color4[2],
+
+		0.1f,0.0f,0.0f,color4[0],color4[1],color4[2],
+		-0.1f,0.2f,0.0f,color4[0],color4[1],color4[2],
+		0.1f,0.2f,0.0f,color4[0],color4[1],color4[2]
 		
 	};
-	twotriver.insert(twotriver.end(),rantangle,rantangle+144);
-	ctwotriver.insert(ctwotriver.end(),rantangle,rantangle+144);
+	twotriver.insert(twotriver.end(),rantangle,rantangle+180);
+	ctwotriver.insert(ctwotriver.end(),rantangle,rantangle+180);
 
 	float pentagon[]{
 
@@ -350,13 +364,27 @@ void Initdata()
 
 		0.6f,-0.6f,0.0f,color4[0],color4[1],color4[2],
 		0.3f,-0.4f,0.0f,color4[0],color4[1],color4[2],
-		0.7f,-0.4f,0.0f,color4[0],color4[1],color4[2]
+		0.7f,-0.4f,0.0f,color4[0],color4[1],color4[2],
+
+		0,0.3f,0.0f,color1[0],color1[1],color1[2],
+		-0.2f,0.2f,0.0f,color1[0],color1[1],color1[2],
+		0.2f,0.2f,0.0f,color1[0],color1[1],color1[2],
+
+
+		0.1f,0.0f,0.0f,color4[0],color4[1],color4[2],
+		-0.1f,0.0f,0.0f,color4[0],color4[1],color4[2],
+		-0.1f,0.2f,0.0f,color4[0],color4[1],color4[2],
+
+		0.1f,0.0f,0.0f,color4[0],color4[1],color4[2],
+		-0.1f,0.2f,0.0f,color4[0],color4[1],color4[2],
+		0.1f,0.2f,0.0f,color4[0],color4[1],color4[2]
+
 	};
-	pentatriver.insert(pentatriver.end(),pentagon,pentagon+216);
-	cpentatriver.insert(cpentatriver.end(),pentagon,pentagon+216);
+	pentatriver.insert(pentatriver.end(),pentagon,pentagon+270);
+	cpentatriver.insert(cpentatriver.end(),pentagon,pentagon+270);
 
 }
-
+int mode_=0;
 int main(int argc,char** argv)
 {
 	//--- 윈도우 생성하기		 //--- 윈도우 출력하고 콜백함수 설정
@@ -444,42 +472,56 @@ GLvoid drawScene () //--- 콜백 함수: 그리기 콜백 함수
 	{
 
 		glLineWidth(1.0f);
-
+		if(mode_==0)
 		for(int i=0;i<4;++i){
 			if(mode[i]==0)
 			glDrawArrays(GL_LINES,offset,2);
 			offset += 2;
 		}
-		
+		if(mode_==1)
+			glDrawArrays(GL_LINES,offset,2);
+		offset += 2;
 		
 		glLineWidth(1.0f);
 	}
 	// 3. 삼각형 그리기
 	if(triangleCount1 > 0)
 	{
+		if(mode_==0)
 		for(int i=0;i<4;++i){
 			if(mode[i]==1)
 			glDrawArrays(GL_TRIANGLES,offset,3);
 			offset += 3;
 		}
+		if(mode_==2)
+			glDrawArrays(GL_TRIANGLES,offset,3);
+		offset += 3;
 	}
 	// 4. 사각형 그리기
 	if(rectangleCount > 0)
 	{
+		if(mode_==0)
 		for(int i=0;i<4;++i){
 			if(mode[i]==2)
 				glDrawArrays(GL_TRIANGLES,offset,6);
 			offset += 6;
 		}
+		if(mode_==3)
+			glDrawArrays(GL_TRIANGLES,offset,6);
+		offset += 6;
 	}
 	// 5. 오각형 그리기
 	if(pentatriCount > 0)
 	{
+		if(mode_==0)
 		for(int i=0;i<4;++i){
 			if(mode[i]==3)
 				glDrawArrays(GL_TRIANGLES,offset,9);
 			offset += 9;
 		}
+		if(mode_==4)
+			glDrawArrays(GL_TRIANGLES,offset,9);
+		offset += 9;
 	}
 	// 6. 굵은 선 그리기
 	if(llineCount > 0)
@@ -529,6 +571,7 @@ void Keyboard(unsigned char key,int x,int y)
 			check[i]=0;
 			mode[i]=1;
 			triver1[i*18+1]=triver1[i*18+1]>0?0.4:-0.6;
+			mode_=1;
 		}
 	}
 	break;
