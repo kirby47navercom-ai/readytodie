@@ -68,8 +68,6 @@ void Motion (int x,int y);
 int glutGetModifiers ();
 void TimerFunction (int value);
 void InitBuffer ();
-//필요한 헤더파일 선언
-//아래 5 개 함수는 사용자 정의 함수 임
 void make_vertexShaders();
 void make_fragmentShaders();
 GLuint make_shaderProgram();

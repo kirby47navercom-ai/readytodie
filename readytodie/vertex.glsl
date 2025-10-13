@@ -1,14 +1,18 @@
 //1-8
 #version 330 core
+layout(location = 0) in vec3 aPos;
+
+out vec3 outColor;
+uniform mat4 model;
+uniform mat4 view;
+uniform mat4 proj;
+uniform vec3 faceColor;
 
 
-layout (location = 0) in vec3 vPos; //--- 응용 프로그램에서 받아온 도형 좌표값
-uniform mat4 modelTransform; //--- 모델링 변환 행렬: uniform 변수로 선언
-void main()
-{
-gl_Position = modelTransform * vec4(vPos, 1.0); //--- 좌표값에 modelTransform 변환을 적용한다.
+void main() {
+    gl_Position = proj * view * model * vec4(aPos, 1.0);
+	outColor = faceColor;
 }
-
 /*
 //--- vertex shader: vertex.glsl 파일에 저장
 //--- in_Position: attribute index 0
