@@ -367,18 +367,18 @@ void Initdata()
 		0.3f,-0.4f,0.0f,color4[0],color4[1],color4[2],
 		0.7f,-0.4f,0.0f,color4[0],color4[1],color4[2],
 
-		0*3.0f,0.3f*3.0f,0.0f,color5[0],color5[1],color5[2],
-		-0.2f*3.0f,0.2f*3.0f,0.0f,color5[0],color5[1],color5[2],
-		0.2f*3.0f,0.2f*3.0f,0.0f,color5[0],color5[1],color5[2],
+		0*3.0f,(0.3f-0.2f)*3.0f,0.0f,color5[0],color5[1],color5[2],
+		-0.2f*3.0f,(0.2f-0.2f)*3.0f,0.0f,color5[0],color5[1],color5[2],
+		0.2f*3.0f,(0.2f-0.2f)*3.0f,0.0f,color5[0],color5[1],color5[2],
 
 
-		0.1f*3.0f,0.0f*3.0f,0.0f,color5[0],color5[1],color5[2],
-		-0.1f*3.0f,0.0f*3.0f,0.0f,color5[0],color5[1],color5[2],
-		-0.1f*3.0f,0.2f*3.0f,0.0f,color5[0],color5[1],color5[2],
+		0.1f*3.0f,(0.0f-0.2f)*3.0f,0.0f,color5[0],color5[1],color5[2],
+		-0.1f*3.0f,(0.0f-0.2f)*3.0f,0.0f,color5[0],color5[1],color5[2],
+		-0.1f*3.0f,(0.2f-0.2f)*3.0f,0.0f,color5[0],color5[1],color5[2],
 
-		0.1f*3.0f,0.0f*3.0f,0.0f,color5[0],color5[1],color5[2],
-		-0.1f*3.0f,0.2f*3.0f,0.0f,color5[0],color5[1],color5[2],
-		0.1f*3.0f,0.2f*3.0f,0.0f,color5[0],color5[1],color5[2]
+		0.1f*3.0f,(0.0f-0.2f)*3.0f,0.0f,color5[0],color5[1],color5[2],
+		-0.1f*3.0f,(0.2f-0.2f)*3.0f,0.0f,color5[0],color5[1],color5[2],
+		0.1f*3.0f,(0.2f-0.2f)*3.0f,0.0f,color5[0],color5[1],color5[2]
 
 	};
 	pentatriver.insert(pentatriver.end(),pentagon,pentagon+270);
@@ -605,7 +605,7 @@ void Keyboard(unsigned char key,int x,int y)
 			
 			mode[i]=3;
 			mode_=4;
-			pentatriver[4*54+1]=0.2f*3.0;
+			pentatriver[4*54+1]=(0.2f-0.2f)*3.0;
 			
 			pentatriver[4*54+6]=-0.1f*3.0;
 			pentatriver[4*54+12]=0.1f*3.0;
@@ -678,26 +678,29 @@ void TimerFunction (int value)
 				
 
 				if(triver1[4*18+1]>=0.2f*3.0f){
-					triver1[4*18+1]=ctriver1[4*18+1];
+					for(int i=0;i<18;++i)
+					triver1[4*18+i]=ctriver1[4*18+i];
 					mode_=0;
 					mode__=0;
 				}
 			}
 			if(mode__==2){
 				
-					twotriver[4*36]+=0.005f;
-					twotriver[4*36+6]-=0.005f;
-					twotriver[4*36+18]+=0.005f;
-					twotriver[4*36+13]-=0.005f;
-					twotriver[4*36+25]-=0.005f;
-					twotriver[4*36+31]-=0.005f;
+					twotriver[4*36]+=0.005f*2.0f;
+					twotriver[4*36+6]-=0.005f*2.0f;
+					twotriver[4*36+18]+=0.005f*2.0f;
+					twotriver[4*36+12]-=0.005f;
+					twotriver[4*36+13]-=0.005f*2.0f;
+					twotriver[4*36+24]-=0.005f;
+					twotriver[4*36+25]-=0.005f*2.0f;
+					twotriver[4*36+30]+=0.005f;
+					twotriver[4*36+31]-=0.005f*2.0f;
 
 				
-				if(twotriver[4*36]>=0.1f*3.0f){
+				if(twotriver[4*36]>=0.1f*3.0f*2.0f){
 					
-					twotriver[4*36]=ctwotriver[4*36];
-					twotriver[4*36+6]=ctwotriver[4*36+6];
-					twotriver[4*36+18]=ctwotriver[4*36+18];
+					for(int i=0;i<36;++i)
+						twotriver[4*36+i]=ctwotriver[4*36+i];
 					mode_=0;
 					mode__=0;
 				}
@@ -711,37 +714,25 @@ void TimerFunction (int value)
 				pentatriver[4*54+42]-=0.005f;
 				pentatriver[4*54+48]+=0.005f;
 			
-				if(pentatriver[4*54+1]>=0.3f*3.0f){
-					pentatriver[4*54+1]=cpentatriver[4*54+1];
-					pentatriver[4*54+6]=cpentatriver[4*54+6];
-					pentatriver[4*54+12]=cpentatriver[4*54+12];
-					pentatriver[4*54+18]=cpentatriver[4*54+18];
-					pentatriver[4*54+24]=cpentatriver[4*54+24];
-					pentatriver[4*54+30]=cpentatriver[4*54+30];
-					pentatriver[4*54+36]=cpentatriver[4*54+36];
-					pentatriver[4*54+42]=cpentatriver[4*54+42];
-					pentatriver[4*54+48]=cpentatriver[4*54+48];
+				if(pentatriver[4*54+1]>=0.3f*1.5f){
+					for(int i=0;i<54;++i)
+						pentatriver[4*54+i]=cpentatriver[4*54+i];
 					mode_=0;
 					mode__=0;
 				}
 			}
 			if(mode__==4){
-				pentatriver[4*54 + 1] += (((pentatriver[4*54 + 42 + 1] + pentatriver[4*54 + 48 + 1]) / 2.0f) - pentatriver[4*54 + 1]) * 0.05f*3.0;
-				pentatriver[4*54 + 19] += (((pentatriver[4*54 + 48 + 1] + pentatriver[4*54 + 0 + 1]) / 2.0f) - pentatriver[4*54 + 19]) * 0.05f*3.0;
-				pentatriver[4*54 + 37] += (((pentatriver[4*54 + 0 + 1] + pentatriver[4*54 + 42 + 1]) / 2.0f) - pentatriver[4*54 + 37]) * 0.05f*3.0;
-				pentatriver[4*54 + 7]  += (((pentatriver[4*54 + 1] + pentatriver[4*54 + 19]) / 2.0f) - pentatriver[4*54 + 7]) * 0.05f*3.0;
-				pentatriver[4*54 + 13] += (((pentatriver[4*54 + 19] + pentatriver[4*54 + 37]) / 2.0f) - pentatriver[4*54 + 13]) * 0.05f*3.0;
-				pentatriver[4*54 + 25] += (((pentatriver[4*54 + 37] + pentatriver[4*54 + 1]) / 2.0f) - pentatriver[4*54 + 25]) * 0.05f*3.0;
-				pentatriver[4*54 + 31] += (((pentatriver[4*54 + 1] + pentatriver[4*54 + 37]) / 2.0f) - pentatriver[4*54 + 31]) * 0.05f*3.0;
+				pentatriver[4*54 + 1] += (((pentatriver[4*54 + 42 + 1] + pentatriver[4*54 + 48 + 1]) / 2.0f) - pentatriver[4*54 + 1]) * 0.05f*2.0;
+				pentatriver[4*54 + 19] += (((pentatriver[4*54 + 48 + 1] + pentatriver[4*54 + 0 + 1]) / 2.0f) - pentatriver[4*54 + 19]) * 0.05f*2.0;
+				pentatriver[4*54 + 37] += (((pentatriver[4*54 + 0 + 1] + pentatriver[4*54 + 42 + 1]) / 2.0f) - pentatriver[4*54 + 37]) * 0.05f*2.0;
+				pentatriver[4*54 + 7]  += (((pentatriver[4*54 + 1] + pentatriver[4*54 + 19]) / 2.0f) - pentatriver[4*54 + 7]) * 0.05f*2.0;
+				pentatriver[4*54 + 13] += (((pentatriver[4*54 + 19] + pentatriver[4*54 + 37]) / 2.0f) - pentatriver[4*54 + 13]) * 0.05f*2.0;
+				pentatriver[4*54 + 25] += (((pentatriver[4*54 + 37] + pentatriver[4*54 + 1]) / 2.0f) - pentatriver[4*54 + 25]) * 0.05f*2.0;
+				pentatriver[4*54 + 31] += (((pentatriver[4*54 + 1] + pentatriver[4*54 + 37]) / 2.0f) - pentatriver[4*54 + 31]) * 0.05f*2.0;
 				++time_[0];
 				if(time_[0]==130){
-					pentatriver[4*54 + 1] = cpentatriver[4*54 + 1];
-					pentatriver[4*54 + 19] = cpentatriver[4*54 + 19];
-					pentatriver[4*54 + 37] = cpentatriver[4*54 + 37];
-					pentatriver[4*54 + 7] = cpentatriver[4*54 + 7];
-					pentatriver[4*54 + 13] = cpentatriver[4*54 + 13];
-					pentatriver[4*54 + 25] = cpentatriver[4*54 + 25];
-					pentatriver[4*54 + 31] = cpentatriver[4*54 + 31];
+					for(int i=0;i<54;++i)
+						pentatriver[4*54+i]=cpentatriver[4*54+i];
 					mode_=0;
 					mode__=0;
 				}
