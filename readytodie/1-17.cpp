@@ -417,6 +417,8 @@ void DrawScene() {
 	cameraPos.x = r * glm::cos(cameraAngle);
 	cameraPos.z = r * glm::sin(cameraAngle);
 
+	cout<<shape[0].vertexData.size()<<endl;
+
 	glEnable(GL_DEPTH_TEST); // 깊이 테스트 활성화
 	glClearColor(0.5f,0.5f,0.5f,1.0f);
 

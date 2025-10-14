@@ -332,7 +332,7 @@ void DrawScene() {
 	glEnable(GL_DEPTH_TEST); // 깊이 테스트 활성화
 	glClearColor(0.5f,0.5f,0.5f,1.0f);
 	//glEnable(GL_CULL_FACE); // 은면 제거 활성화
-	//glCullFace(GL_BACK); // 뒷면 제거 
+	glCullFace(GL_BACK); // 뒷면 제거 
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // 깊이 버퍼 클리어 추가
 
 	glUseProgram(shaderProgramID);
