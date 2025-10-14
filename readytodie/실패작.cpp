@@ -65,9 +65,6 @@ public:
 
 	void InitBuffer(Model model){
 		vertexData.clear();
-		angle[0].clear();
-		angle[1].clear();
-		angle[2].clear();
 		// 모든 face의 꼭짓점 좌표를 중복 포함해서 vertexData에 추가
 		for(size_t i = 0; i < model.face_count; ++i) {
 			Face f = model.faces[i];
@@ -86,10 +83,6 @@ public:
 			vertexData.push_back(v3.x);
 			vertexData.push_back(v3.y);
 			vertexData.push_back(v3.z);
-			// 각 꼭짓점에 대한 회전 각도 초기화 (0으로 설정)
-			angle[0].push_back(0.0f);
-			angle[1].push_back(0.0f);
-			angle[2].push_back(0.0f);
 		}
 		// 인덱스는 필요 없으므로 비워둡니다
 		indices.clear();
@@ -204,13 +197,6 @@ public:
 		vy = ry + cy;
 		vz = rz + cz;
 	}
-	void Scale(float cx,float cy,float cz,float scale,int index) {
-		int start = index * 3;
-		if(start + 2 >= vertexData.size()) return;
-		vertexData[start + 0] = (vertexData[start + 0] - cx) * scale + cx;
-		vertexData[start + 1] = (vertexData[start + 1] - cy) * scale + cy;
-		vertexData[start + 2] = (vertexData[start + 2] - cz) * scale + cz;
-	}
 
 	void draw(){
 		glBindVertexArray(VAO);
@@ -296,7 +282,7 @@ bool b = false;
 bool silver=false;
 bool solid=false;
 int x_start=0;
-bool y_start=false;
+int y_start=0;
 bool z_start=false;
 bool t = false;
 bool f = false;
@@ -311,11 +297,8 @@ float x_rotate=1.0f;
 float y_rotate=1.0f;
 float z_rotate=1.0f;
 
-float rotate_count=0.0f;
 
-int scale_time=0;
 
-int move_num=0;
 
 void InitData(){
 	shape.clear();
@@ -475,12 +458,12 @@ void DrawScene() {
 	cameraPos.x = r * glm::cos(cameraAngle);
 	cameraPos.z = r * glm::sin(cameraAngle);
 
+
 	glEnable(GL_DEPTH_TEST); // 깊이 테스트 활성화
 	glClearColor(0.5f,0.5f,0.5f,1.0f);
-	if(silver)
-		glEnable(GL_CULL_FACE);// 은면 제거 활성화
-	else
-		glDisable(GL_CULL_FACE);
+
+	//glEnable(GL_CULL_FACE);
+
 	//glCullFace(GL_BACK); // 뒷면 제거 
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // 깊이 버퍼 클리어 추가
 
@@ -489,10 +472,8 @@ void DrawScene() {
 
 	Update();
 
-	/*if(solid)
-		glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);
-	else
-		glPolygonMode(GL_FRONT_AND_BACK,GL_LINE);*/
+
+	glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);
 
 
 	// Uniform 매트릭스 매핑
@@ -502,8 +483,11 @@ void DrawScene() {
 	GLint faceColorLoc = glGetUniformLocation(shaderProgramID,"faceColor");
 
 
+
+
 	//--------------------------------------------------------------------------
 	// 각 면(6 indices)마다 색상 uniform 설정 후 그리기
+	float a=-30.0f;
 	GLuint offset = 0;
 	if(!b){
 		for(int i = 0; i < shape[0].vertexData.size() / 9; ++i){ // colors 개수 == face 개수
@@ -511,42 +495,29 @@ void DrawScene() {
 			// 모델 매트릭스: 이동 + 회전 적용 (회전은 이동 후 적용되도록 순서 주의)
 			glm::mat4 modelMat = glm::mat4(1.0f);
 			modelMat = glm::translate(modelMat,modelPos);  // 먼저 이동 적용
-			modelMat = glm::rotate(modelMat,glm::radians(shape[0].angle[0][i]),glm::vec3(1.0f,0.0f,0.0f));  // X축 회전
-			modelMat = glm::rotate(modelMat,glm::radians(shape[0].angle[1][i]),glm::vec3(0.0f,1.0f,0.0f));  // Y축 회전
-			modelMat = glm::rotate(modelMat,glm::radians(shape[0].angle[2][i]),glm::vec3(0.0f,0.0f,1.0f));//Z축 회전
+			modelMat = glm::rotate(modelMat,glm::radians(a),glm::vec3(0.0f,1.0f,0.0f));  // Y축 회전
+			modelMat = glm::rotate(modelMat,glm::radians(a),glm::vec3(1.0f,0.0f,0.0f));  // X축 회전
 
 
 
 
-			glUniformMatrix4fv(modelLoc,1,GL_FALSE,glm::value_ptr(modelMat));
 			glm::vec3 col = shape[0].colors[i];
 
 			glUniform3f(faceColorLoc,col.r,col.g,col.b);
 			glDrawArrays(GL_TRIANGLES,offset,3);
 			offset += 3;
-
-
-
-
-		}
-
-	} 
-	else{
-		offset += shape[0].vertexData.size() / 3;
-		for(int i = 0; i < shape[0].vertexData.size() / 9; ++i){ // colors 개수 == face 개수
-			// 모델 매트릭스: 이동 + 회전 적용 (회전은 이동 후 적용되도록 순서 주의)
-			glm::mat4 modelMat = glm::mat4(1.0f);
-			modelMat = glm::translate(modelMat,modelPos);  // 먼저 이동 적용
-			modelMat = glm::rotate(modelMat,glm::radians(shape[0].angle[0][i]),glm::vec3(1.0f,0.0f,0.0f));  // X축 회전
-			modelMat = glm::rotate(modelMat,glm::radians(shape[0].angle[1][i]),glm::vec3(0.0f,1.0f,0.0f));  // Y축 회전
-			modelMat = glm::rotate(modelMat,glm::radians(shape[0].angle[2][i]),glm::vec3(0.0f,0.0f,1.0f));//Z축 회전
-
+			a+=10.0f;
 
 
 
 			glUniformMatrix4fv(modelLoc,1,GL_FALSE,glm::value_ptr(modelMat));
-			glm::vec3 col = shape[0].colors[i];
 
+		}
+
+	} else{
+		offset += shape[0].vertexData.size() / 3;
+		for(int i = 0; i < shape[0].vertexData.size() / 9; ++i){ // colors 개수 == face 개수
+			glm::vec3 col = shape[1].colors[i];
 			glUniform3f(faceColorLoc,col.r,col.g,col.b);
 			glDrawArrays(GL_TRIANGLES,offset,3);
 			offset += 3;
@@ -559,6 +530,8 @@ void DrawScene() {
 
 	glUniformMatrix4fv(viewLoc,1,GL_FALSE,glm::value_ptr(view));
 	glUniformMatrix4fv(projLoc,1,GL_FALSE,glm::value_ptr(proj));
+
+
 
 
 	//---------------------------------------------------------------------------
@@ -609,7 +582,7 @@ void Reshape(int w,int h) {
 void Mouse(int button,int state,int x,int y) {
 
 }
-
+static float rotate_count=0.0f;
 void Keyboard(unsigned char key,int x,int y)
 {
 	switch(key)
@@ -621,8 +594,14 @@ void Keyboard(unsigned char key,int x,int y)
 	silver=!silver;
 	break;
 	case 'y':
-	y_start=!y_start;
+	{
+		y_start=1;
+	}
 	break;
+	case 'Y':
+	{
+		y_start=0;
+	}
 	break;
 	case 'c':
 	{
@@ -638,8 +617,6 @@ void Keyboard(unsigned char key,int x,int y)
 		o=false;
 		r=false;
 		rotate_count=0.0f;
-		scale_time=0;
-		move_num=0;
 	}
 	break;
 	case 't':
@@ -652,7 +629,6 @@ void Keyboard(unsigned char key,int x,int y)
 	if(!b)
 	{
 		f=!f;
-		rotate_count=0.0f;
 	}
 	break;
 	case 's':
@@ -665,7 +641,6 @@ void Keyboard(unsigned char key,int x,int y)
 	if(!b)
 	{
 		b_ = !b_;
-		scale_time=0;
 	}
 	break;
 	case 'o':
@@ -690,20 +665,41 @@ void Keyboard(unsigned char key,int x,int y)
 // 특수 키(화살표) 처리 함수: 도형 회전
 void SpecialKeyboard(int key,int x,int y)
 {
-	
+	switch(key)
+	{
+	case GLUT_KEY_UP:
+	{
+		for(int i=0;i<shape.size();++i)
+			shape[i].move(0.0f,0.1f,0.0f);
+	}
+	break;
+	case GLUT_KEY_DOWN:
+	{
+		for(int i=0;i<shape.size();++i)
+			shape[i].move(0.0f,-0.1f,0.0f);
+	}
+	break;
+	case GLUT_KEY_LEFT:
+	{
+		for(int i=0;i<shape.size();++i)
+			shape[i].move(-0.1f,0.0f,0.0f);
+	}
+	break;
+	case GLUT_KEY_RIGHT:
+	{
+		for(int i=0;i<shape.size();++i)
+			shape[i].move(0.1f,0.0f,0.0f);
+	}
+	break;
+	default:
+	break;
+	}
 
 	glutPostRedisplay();  // 재렌더링 요청
 }
 void TimerFunction(int value)
 {
-	if(y_start){
-		for(int i=0;i<shape.size();++i){
-			for(int j=0;j<shape[i].angle[1].size();++j){
-				shape[i].angle[1][j]+=1.0f;
-			}
-		}
-	}
-	if(t){
+	if(t) {
 		float cx = 0,cy = 0,cz = 0;
 		for(int i = 12; i <= 17; ++i) {
 			cx += shape[0].vertexData[i * 3 + 0];
@@ -713,8 +709,9 @@ void TimerFunction(int value)
 		cx /= 6.0f;
 		cy /= 6.0f;
 		cz /= 6.0f;
+
 		for(int i = 12; i <= 17; ++i) {
-			shape[0].RotateWorld(cx,cy,cz,glm::radians(x_rotate),i,0);
+			shape[0].RotateWorld(cx,cy,cz,z_rotate/20,i,0);
 		}
 	}
 
@@ -734,144 +731,23 @@ void TimerFunction(int value)
 				shape[0].RotateWorld(cx,cy,cz,z_rotate/60,i,0);
 			}
 			rotate_count+=z_rotate;
-		} 
-		else if(rotate_count>0.0f&&!f){
+		} else if(rotate_count>1.0f&&!f){
 			for(int i = 18; i <= 23; ++i) {
 				shape[0].RotateWorld(cx,cy,cz,-z_rotate/60,i,0);
 			}
-					
 			rotate_count-=z_rotate;
 		}
-		
 	}
 
-	if(s){
-		float cx = 0,cy = 0,cz = 0;
-		for(int i = 0; i <= 5; ++i) {
-			cx += shape[0].vertexData[i * 3 + 0];
-			cy += shape[0].vertexData[i * 3 + 1];
-			cz += shape[0].vertexData[i * 3 + 2];
-		}
-		cx /= 6.0f;
-		cy /= 6.0f;
-		cz /= 6.0f;
-
-		for(int i = 0; i <= 5; ++i) {
-			shape[0].RotateWorld(cx,cy,cz,y_rotate,i,0);
-			shape[0].RotateWorld(cx,cy,cz,y_rotate,i+30,0);
-		}
-
-	}
-	//6~11
-	{
-		float cx = 0,cy = 0,cz = 0;
-		for(int i = 0; i <= 5; ++i) {
-			cx += shape[0].vertexData[i * 3 + 0];
-			cy += shape[0].vertexData[i * 3 + 1];
-			cz += shape[0].vertexData[i * 3 + 2];
-		}
-		cx /= 6.0f;
-		cy /= 6.0f;
-		cz /= 6.0f;
-
-		for(int i = 6; i <= 11; ++i) {
-			if(b_){
-				shape[0].Scale(cx,cy,cz,0.99f,i);
-				++scale_time;
-			}
-			else if(!b_&&scale_time>0){
-				shape[0].Scale(cx,cy,cz,1.01001f,i);
-				--scale_time;
+	if(y_start==1) {
+		for(int i=0;i<shape.size();++i){
+			for(int j = 0; j < shape[i].vertexData.size() / 3; ++j)
+			{
+				shape[i].Rotate(0,1,0,0,y_rotate,0,j);
 			}
 		}
+
 	}
-	if(o&&!r&&move_num==0){
-		if(shape[1].vertexData[1]>0.0f){
-			shape[1].vertexData[2]+=0.01;
-			shape[1].vertexData[1]-=0.005;
-		
-			shape[1].vertexData[9]-=0.01;
-			shape[1].vertexData[10]-=0.005;
-		
-			shape[1].vertexData[20]-=0.01;
-			shape[1].vertexData[19]-=0.005;
-		
-			shape[1].vertexData[27]+=0.01;
-			shape[1].vertexData[28]-=0.005;
-		}
-		
-	}
-	if(!o&&!r&&move_num==0){
-		if(shape[1].vertexData[1]<1.0f){
-			shape[1].vertexData[2]-=0.01;
-			shape[1].vertexData[1]+=0.005;
-
-			shape[1].vertexData[9]+=0.01;
-			shape[1].vertexData[10]+=0.005;
-
-			shape[1].vertexData[20]+=0.01;
-			shape[1].vertexData[19]+=0.005;
-
-			shape[1].vertexData[27]-=0.01;
-			shape[1].vertexData[28]+=0.005;
-		}
-	}
-	if(r){
-		if(move_num==0){
-			shape[1].vertexData[2]+=0.01;
-			shape[1].vertexData[1]-=0.005;
-			if(shape[1].vertexData[1]<=0.5f)
-				++move_num;
-			
-		}
-		if(move_num==1){
-			shape[1].vertexData[9]-=0.01;
-			shape[1].vertexData[10]-=0.005;
-			if(shape[1].vertexData[10]<=0.5f)
-				++move_num;
-		}
-		if(move_num==2){
-			shape[1].vertexData[20]-=0.01;
-			shape[1].vertexData[19]-=0.005;
-			if(shape[1].vertexData[19]<=0.5f)
-				++move_num;
-		}
-		if(move_num==3){
-			shape[1].vertexData[27]+=0.01;
-			shape[1].vertexData[28]-=0.005;
-			if(shape[1].vertexData[28]<=0.5f)
-				++move_num;
-		}
-	}
-	else if(!r&&move_num>0){
-		if(move_num==1){
-			shape[1].vertexData[2]-=0.01;
-			shape[1].vertexData[1]+=0.005;
-			if(shape[1].vertexData[1]>=1.0f)
-				--move_num;
-
-		}
-		if(move_num==2){
-			shape[1].vertexData[9]+=0.01;
-			shape[1].vertexData[10]+=0.005;
-			if(shape[1].vertexData[10]>=1.0f)
-				--move_num;
-		}
-		if(move_num==3){
-			shape[1].vertexData[20]+=0.01;
-			shape[1].vertexData[19]+=0.005;
-			if(shape[1].vertexData[19]>=1.0f)
-				--move_num;
-		}
-		if(move_num==4){
-			shape[1].vertexData[27]-=0.01;
-			shape[1].vertexData[28]+=0.005;
-			if(shape[1].vertexData[28]>=1.0f)
-				--move_num;
-		}
-	}
-
-
 
 	glutTimerFunc(10,TimerFunction,1);
 	glutPostRedisplay();
