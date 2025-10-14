@@ -652,7 +652,6 @@ void Keyboard(unsigned char key,int x,int y)
 	if(!b)
 	{
 		f=!f;
-		rotate_count=0.0f;
 	}
 	break;
 	case 's':
@@ -665,7 +664,6 @@ void Keyboard(unsigned char key,int x,int y)
 	if(!b)
 	{
 		b_ = !b_;
-		scale_time=0;
 	}
 	break;
 	case 'o':
@@ -773,7 +771,6 @@ void TimerFunction(int value)
 		cx /= 6.0f;
 		cy /= 6.0f;
 		cz /= 6.0f;
-
 		for(int i = 6; i <= 11; ++i) {
 			if(b_){
 				shape[0].Scale(cx,cy,cz,0.99f,i);
