@@ -304,7 +304,7 @@ bool s = false;
 bool b_ = false;
 bool o = false;
 bool r= false;
-
+bool u=false;
 
 
 float x_rotate=1.0f;
@@ -481,7 +481,17 @@ void DrawScene() {
 		glEnable(GL_CULL_FACE);// 은면 제거 활성화
 	else
 		glDisable(GL_CULL_FACE);
-	//glCullFace(GL_BACK); // 뒷면 제거 
+
+
+	if(u){
+		glEnable(GL_CULL_FACE);
+		glCullFace(GL_BACK); // 뒷면 제거
+	}
+	else{
+		glDisable(GL_CULL_FACE);
+	}
+	
+
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // 깊이 버퍼 클리어 추가
 
 	glUseProgram(shaderProgramID);
@@ -489,10 +499,10 @@ void DrawScene() {
 
 	Update();
 
-	/*if(solid)
+	if(!solid)
 		glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);
 	else
-		glPolygonMode(GL_FRONT_AND_BACK,GL_LINE);*/
+		glPolygonMode(GL_FRONT_AND_BACK,GL_LINE);
 
 
 	// Uniform 매트릭스 매핑
@@ -623,6 +633,8 @@ void Keyboard(unsigned char key,int x,int y)
 	case 'y':
 	y_start=!y_start;
 	break;
+	case 'w':
+	solid=!solid;
 	break;
 	case 'c':
 	{
@@ -641,6 +653,9 @@ void Keyboard(unsigned char key,int x,int y)
 		scale_time=0;
 		move_num=0;
 	}
+	break;
+	case 'u':
+	u=!u;
 	break;
 	case 't':
 	if(!b)
