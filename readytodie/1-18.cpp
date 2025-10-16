@@ -189,8 +189,8 @@ public:
 		} else if(num==1){
 			//x축회전
 			rx = tx;
-			ry = tz * cosA - ty * sinA;
-			rz = tz * sinA + ty * cosA;
+			ry = ty * cosA - tz * sinA;
+			rz = ty * sinA + tz * cosA;
 		} else{
 			//y축회전
 			rx = tx * cosA + tz * sinA;
@@ -211,6 +211,18 @@ public:
 		vertexData[start + 1] = (vertexData[start + 1] - cy) * scale + cy;
 		vertexData[start + 2] = (vertexData[start + 2] - cz) * scale + cz;
 	}
+
+	glm::vec3 Center(){
+		glm::vec3 center(0.0f);
+		for(int i = 0; i < vertexData.size()/3; ++i) {
+			center.x += vertexData[i * 3 + 0];
+			center.y += vertexData[i * 3 + 1];
+			center.z += vertexData[i * 3 + 2];
+		}
+		center /= static_cast<float>(vertexData.size()/3);
+		return center;
+	}
+	
 
 	void draw(){
 		glBindVertexArray(VAO);
@@ -310,6 +322,12 @@ bool c=false;
 float x_rotate=1.0f;
 float y_rotate=1.0f;
 float z_rotate=1.0f;
+
+glm::vec3 center1;
+glm::vec3 center2;
+glm::vec3 center3;
+glm::vec3 center4;
+
 
 float rotate_count=0.0f;
 
@@ -619,60 +637,80 @@ void Keyboard(unsigned char key,int x,int y)
 	case '1':
 	case '2':
 	case '3':
+	if(!t&&!u&&!v)
 	shape_check=key-'0';
 	break;
 	case 'x':
+	if(!t&&!u&&!v)
 	x_ = (x_ != 1) ? 1 : 0;
 	break;
 	case 'X':
+	if(!t&&!u&&!v)
 	x_ = (x_ != 2) ? 2 : 0;
 	break;
 	case 'y':
-	y_=(y_ != 1) ? y_!=1:0;
+	if(!t&&!u&&!v)
+	y_=(y_ != 1) ?1 : 0;
 	break;
 	case 'Y':
-	y_=(y_ != 2) ? y_!=2:0;
+	if(!t&&!u&&!v)
+	y_=(y_ != 2) ? 2 : 0;
 	break;
 	case 'r':
-	r=(r != 1) ? r!=1:0;
+	if(!t&&!u&&!v)
+	r=(r != 1) ? 1 : 0;
 	break;
 	case 'R':
-	r=(r != 2) ? r!=2:0;
+	if(!t&&!u&&!v)
+	r=(r != 2) ? 2 : 0;
 	break;
 	case 'a':
-	a=(a != 1) ? a!=1:0;
+	if(!t&&!u&&!v)
+	a=(a != 1) ? 1 : 0;
 	break;
 	case 'A':
-	a=(a != 2) ? a!=2:0;
+	if(!t&&!u&&!v)
+	a=(a != 2) ? 2 : 0;
 	break;
 	case 'b':
-	b=(b != 1) ? b!=1:0;
+	if(!t&&!u&&!v)
+	b=(b != 1) ? 1 : 0;
 	break;
 	case 'B':
-	b=(b != 2) ? b!=2:0;
+	if(!t&&!u&&!v)
+	b=(b != 2) ? 2 : 0;
 	break;
 	case 'd':
-	d=(d != 1) ? d!=1:0;
+	if(!t&&!u&&!v)
+	d=(d != 1) ? 1 : 0;
 	break;
 	case 'D':
-	d=(d != 2) ? d!=2:0;
+	if(!t&&!u&&!v)
+	d=(d != 2) ? 2 : 0;
 	break;
 	case 'e':
-	e=(e != 1) ? e!=1:0;
+	if(!t&&!u&&!v)
+	e=(e != 1) ? 1 : 0;
 	break;
 	case 'E':
-	e=(e != 2) ? e!=2:0;
+	if(!t&&!u&&!v)
+	e=(e != 2) ? 2 : 0;
 	break;
 	case 't':
-	t=true;
-	break;
+	if(!u&&!v){
+		t=true;
 
+	}
+	break;
 	case 'u':
-	u=true;
+	if(!t&&!v){
+		u=true;
+	}
 	break;
-
 	case 'v':
-	v=true;
+	if(!t&&!u){
+		v=true;
+	}
 	break;
 
 	case 'c':
@@ -693,6 +731,7 @@ void Keyboard(unsigned char key,int x,int y)
 	u=false;
 	v=false;
 	c=false;
+	scale_time=0;
 	break;
 
 
@@ -714,7 +753,7 @@ void SpecialKeyboard(int key,int x,int y)
 	glutPostRedisplay();  // 재렌더링 요청
 }
 void X_rotate(){
-	if(x_==1){
+	/*if(x_==1){
 		if(shape_check==1||shape_check==3){
 			for(int i=0;i<shape[0].angle[1].size();++i)shape[0].angle[0][i] += x_rotate;
 			for(int i=0;i<shape[1].angle[1].size();++i)shape[1].angle[0][i] += x_rotate;
@@ -724,7 +763,8 @@ void X_rotate(){
 			for(int i=0;i<shape[2].angle[1].size();++i)shape[2].angle[0][i] += x_rotate;
 			for(int i=0;i<shape[3].angle[1].size();++i)shape[3].angle[0][i] += x_rotate;
 		}
-	} else if(x_==2){
+	} 
+	else if(x_==2){
 		if(shape_check==1||shape_check==3){
 			for(int i=0;i<shape[0].angle[1].size();++i)shape[0].angle[0][i] -= x_rotate;
 			for(int i=0;i<shape[1].angle[1].size();++i)shape[1].angle[0][i] -= x_rotate;
@@ -734,13 +774,405 @@ void X_rotate(){
 			for(int i=0;i<shape[2].angle[1].size();++i)shape[2].angle[0][i] -= x_rotate;
 			for(int i=0;i<shape[3].angle[1].size();++i)shape[3].angle[0][i] -= x_rotate;
 		}
+	}*/
+
+	if(x_==1){
+		if(shape_check==1||shape_check==3){
+			for(int j = 0; j < 2; ++j){
+				float cx = 0,cy = 0,cz = 0;
+				for(int i = 0; i < shape[j].vertexData.size()/3; ++i) {
+					cx += shape[j].vertexData[i * 3 + 0];
+					cy += shape[j].vertexData[i * 3 + 1];
+					cz += shape[j].vertexData[i * 3 + 2];
+				}
+				cx /=shape[j].vertexData.size()/3;
+				cy /=shape[j].vertexData.size()/3;
+				cz /=shape[j].vertexData.size()/3;
+
+				for(int i = 0; i < shape[j].vertexData.size()/3; ++i) {
+					shape[j].RotateWorld(cx,cy,cz,glm::radians(x_rotate),i,1);
+				}
+			}
+
+		}
+		if(shape_check==2||shape_check==3){
+			for(int j = 2; j < 4; ++j){
+				float cx = 0,cy = 0,cz = 0;
+				for(int i = 0; i < shape[j].vertexData.size()/3; ++i) {
+					cx += shape[j].vertexData[i * 3 + 0];
+					cy += shape[j].vertexData[i * 3 + 1];
+					cz += shape[j].vertexData[i * 3 + 2];
+				}
+				cx /=shape[j].vertexData.size()/3;
+				cy /=shape[j].vertexData.size()/3;
+				cz /=shape[j].vertexData.size()/3;
+
+				for(int i = 0; i < shape[j].vertexData.size()/3; ++i) {
+					shape[j].RotateWorld(cx,cy,cz,glm::radians(x_rotate),i,1);
+				}
+			}
+		}
+	}
+	else if(x_==2){
+		if(shape_check==1||shape_check==3){
+			for(int j = 0; j < 2; ++j){
+				float cx = 0,cy = 0,cz = 0;
+				for(int i = 0; i < shape[j].vertexData.size()/3; ++i) {
+					cx += shape[j].vertexData[i * 3 + 0];
+					cy += shape[j].vertexData[i * 3 + 1];
+					cz += shape[j].vertexData[i * 3 + 2];
+				}
+				cx /=shape[j].vertexData.size()/3;
+				cy /=shape[j].vertexData.size()/3;
+				cz /=shape[j].vertexData.size()/3;
+
+				for(int i = 0; i < shape[j].vertexData.size()/3; ++i) {
+					shape[j].RotateWorld(cx,cy,cz,glm::radians(-x_rotate),i,1);
+				}
+			}
+
+		}
+		if(shape_check==2||shape_check==3){
+			for(int j = 2; j < 4; ++j){
+				float cx = 0,cy = 0,cz = 0;
+				for(int i = 0; i < shape[j].vertexData.size()/3; ++i) {
+					cx += shape[j].vertexData[i * 3 + 0];
+					cy += shape[j].vertexData[i * 3 + 1];
+					cz += shape[j].vertexData[i * 3 + 2];
+				}
+				cx /=shape[j].vertexData.size()/3;
+				cy /=shape[j].vertexData.size()/3;
+				cz /=shape[j].vertexData.size()/3;
+
+				for(int i = 0; i < shape[j].vertexData.size()/3; ++i) {
+					shape[j].RotateWorld(cx,cy,cz,glm::radians(-x_rotate),i,1);
+				}
+			}
+		}
+	}
+}
+void Y_rotate(){
+	if(y_==1){
+		if(shape_check==1||shape_check==3){
+			for(int j = 0; j < 2; ++j){
+				float cx = 0,cy = 0,cz = 0;
+				for(int i = 0; i < shape[j].vertexData.size()/3; ++i) {
+					cx += shape[j].vertexData[i * 3 + 0];
+					cy += shape[j].vertexData[i * 3 + 1];
+					cz += shape[j].vertexData[i * 3 + 2];
+				}
+				cx /=shape[j].vertexData.size()/3;
+				cy /=shape[j].vertexData.size()/3;
+				cz /=shape[j].vertexData.size()/3;
+
+				for(int i = 0; i < shape[j].vertexData.size()/3; ++i) {
+					shape[j].RotateWorld(cx,cy,cz,glm::radians(y_rotate),i,2);
+				}
+			}
+
+		}
+		if(shape_check==2||shape_check==3){
+			for(int j = 2; j < 4; ++j){
+				float cx = 0,cy = 0,cz = 0;
+				for(int i = 0; i < shape[j].vertexData.size()/3; ++i) {
+					cx += shape[j].vertexData[i * 3 + 0];
+					cy += shape[j].vertexData[i * 3 + 1];
+					cz += shape[j].vertexData[i * 3 + 2];
+				}
+				cx /=shape[j].vertexData.size()/3;
+				cy /=shape[j].vertexData.size()/3;
+				cz /=shape[j].vertexData.size()/3;
+
+				for(int i = 0; i < shape[j].vertexData.size()/3; ++i) {
+					shape[j].RotateWorld(cx,cy,cz,glm::radians(y_rotate),i,2);
+				}
+			}
+		}
+	} else if(y_==2){
+		if(shape_check==1||shape_check==3){
+			for(int j = 0; j < 2; ++j){
+				float cx = 0,cy = 0,cz = 0;
+				for(int i = 0; i < shape[j].vertexData.size()/3; ++i) {
+					cx += shape[j].vertexData[i * 3 + 0];
+					cy += shape[j].vertexData[i * 3 + 1];
+					cz += shape[j].vertexData[i * 3 + 2];
+				}
+				cx /=shape[j].vertexData.size()/3;
+				cy /=shape[j].vertexData.size()/3;
+				cz /=shape[j].vertexData.size()/3;
+
+				for(int i = 0; i < shape[j].vertexData.size()/3; ++i) {
+					shape[j].RotateWorld(cx,cy,cz,glm::radians(-y_rotate),i,2);
+				}
+			}
+
+		}
+		if(shape_check==2||shape_check==3){
+			for(int j = 2; j < 4; ++j){
+				float cx = 0,cy = 0,cz = 0;
+				for(int i = 0; i < shape[j].vertexData.size()/3; ++i) {
+					cx += shape[j].vertexData[i * 3 + 0];
+					cy += shape[j].vertexData[i * 3 + 1];
+					cz += shape[j].vertexData[i * 3 + 2];
+				}
+				cx /=shape[j].vertexData.size()/3;
+				cy /=shape[j].vertexData.size()/3;
+				cz /=shape[j].vertexData.size()/3;
+
+				for(int i = 0; i < shape[j].vertexData.size()/3; ++i) {
+					shape[j].RotateWorld(cx,cy,cz,glm::radians(-y_rotate),i,2);
+				}
+			}
+		}
+	}
+}
+void Y_gong(){
+	if(r==1){
+		if(shape_check==1||shape_check==3){
+			for(int i=0;i<shape[0].angle[1].size();++i)shape[0].angle[1][i] += y_rotate;
+			for(int i=0;i<shape[1].angle[1].size();++i)shape[1].angle[1][i] += y_rotate;
+
+		}
+		if(shape_check==2||shape_check==3){
+			for(int i=0;i<shape[2].angle[1].size();++i)shape[2].angle[1][i] += y_rotate;
+			for(int i=0;i<shape[3].angle[1].size();++i)shape[3].angle[1][i] += y_rotate;
+		}
+	} else if(r==2){
+		if(shape_check==1||shape_check==3){
+			for(int i=0;i<shape[0].angle[1].size();++i)shape[0].angle[1][i] -= y_rotate;
+			for(int i=0;i<shape[1].angle[1].size();++i)shape[1].angle[1][i] -= y_rotate;
+
+		}
+		if(shape_check==2||shape_check==3){
+			for(int i=0;i<shape[2].angle[1].size();++i)shape[2].angle[1][i] -= y_rotate;
+			for(int i=0;i<shape[3].angle[1].size();++i)shape[3].angle[1][i] -= y_rotate;
+		}
+	}
+}
+void SizeUPDown(){
+	if(a==1){
+		if(shape_check==1||shape_check==3){
+			for(int j = 0; j < 2; ++j){
+				float cx = 0,cy = 0,cz = 0;
+				for(int i = 0; i < shape[j].vertexData.size()/3; ++i) {
+					cx += shape[j].vertexData[i * 3 + 0];
+					cy += shape[j].vertexData[i * 3 + 1];
+					cz += shape[j].vertexData[i * 3 + 2];
+				}
+				cx /=shape[j].vertexData.size()/3;
+				cy /=shape[j].vertexData.size()/3;
+				cz /=shape[j].vertexData.size()/3;
+
+				for(int i = 0; i < shape[j].vertexData.size()/3; ++i) {
+					shape[j].Scale(cx,cy,cz,1.01001f,i);
+				}
+			}
+
+		}
+		if(shape_check==2||shape_check==3){
+			for(int j = 2; j < 4; ++j){
+				float cx = 0,cy = 0,cz = 0;
+				for(int i = 0; i < shape[j].vertexData.size()/3; ++i) {
+					cx += shape[j].vertexData[i * 3 + 0];
+					cy += shape[j].vertexData[i * 3 + 1];
+					cz += shape[j].vertexData[i * 3 + 2];
+				}
+				cx /=shape[j].vertexData.size()/3;
+				cy /=shape[j].vertexData.size()/3;
+				cz /=shape[j].vertexData.size()/3;
+
+				for(int i = 0; i < shape[j].vertexData.size()/3; ++i) {
+					shape[j].Scale(cx,cy,cz,1.01001f,i);
+				}
+			}
+		}
+	} else if(a==2){
+		if(shape_check==1||shape_check==3){
+			for(int j = 0; j < 2; ++j){
+				float cx = 0,cy = 0,cz = 0;
+				for(int i = 0; i < shape[j].vertexData.size()/3; ++i) {
+					cx += shape[j].vertexData[i * 3 + 0];
+					cy += shape[j].vertexData[i * 3 + 1];
+					cz += shape[j].vertexData[i * 3 + 2];
+				}
+				cx /=shape[j].vertexData.size()/3;
+				cy /=shape[j].vertexData.size()/3;
+				cz /=shape[j].vertexData.size()/3;
+
+				for(int i = 0; i < shape[j].vertexData.size()/3; ++i) {
+					shape[j].Scale(cx,cy,cz,0.99f,i);
+				}
+			}
+
+		}
+		if(shape_check==2||shape_check==3){
+			for(int j = 2; j < 4; ++j){
+				float cx = 0,cy = 0,cz = 0;
+				for(int i = 0; i < shape[j].vertexData.size()/3; ++i) {
+					cx += shape[j].vertexData[i * 3 + 0];
+					cy += shape[j].vertexData[i * 3 + 1];
+					cz += shape[j].vertexData[i * 3 + 2];
+				}
+				cx /=shape[j].vertexData.size()/3;
+				cy /=shape[j].vertexData.size()/3;
+				cz /=shape[j].vertexData.size()/3;
+
+				for(int i = 0; i < shape[j].vertexData.size()/3; ++i) {
+					shape[j].Scale(cx,cy,cz,0.99f,i);
+				}
+			}
+		}
+	}
+}
+void SizeOne(){
+	if(b==1){
+		if(shape_check==1||shape_check==3){
+			for(int j = 0; j < 2; ++j){
+				for(int i = 0; i < shape[j].vertexData.size()/3; ++i) {
+					shape[j].Scale(0,0,0,1.01001f,i);
+				}
+			}
+
+		}
+		if(shape_check==2||shape_check==3){
+			for(int j = 2; j < 4; ++j){
+				for(int i = 0; i < shape[j].vertexData.size()/3; ++i) {
+					shape[j].Scale(0,0,0,1.01001f,i);
+				}
+			}
+		}
+	} else if(b==2){
+		if(shape_check==1||shape_check==3){
+			for(int j = 0; j < 2; ++j){
+				for(int i = 0; i < shape[j].vertexData.size()/3; ++i) {
+					shape[j].Scale(0,0,0,0.99f,i);
+				}
+			}
+
+		}
+		if(shape_check==2||shape_check==3){
+			for(int j = 2; j < 4; ++j){
+				for(int i = 0; i < shape[j].vertexData.size()/3; ++i) {
+					shape[j].Scale(0,0,0,0.99f,i);
+				}
+			}
+		}
+	}
+}
+void MoveX(){
+	if(d==1){
+		if(shape_check==1||shape_check==3){
+			for(int j = 0; j < 2; ++j){
+				for(int i = 0; i < shape[j].vertexData.size()/3; ++i) {
+					shape[j].move(0.0005f,0,0);
+				}
+			}
+
+		}
+		if(shape_check==2||shape_check==3){
+			for(int j = 2; j < 4; ++j){
+				for(int i = 0; i < shape[j].vertexData.size()/3; ++i) {
+					shape[j].move(0.0005f,0,0);
+				}
+			}
+		}
+	} else if(d==2){
+		if(shape_check==1||shape_check==3){
+			for(int j = 0; j < 2; ++j){
+				for(int i = 0; i < shape[j].vertexData.size()/3; ++i) {
+					shape[j].move(-0.0005f,0,0);
+				}
+			}
+
+		}
+		if(shape_check==2||shape_check==3){
+			for(int j = 2; j < 4; ++j){
+				for(int i = 0; i < shape[j].vertexData.size()/3; ++i) {
+					shape[j].move(-0.0005f,0,0);
+				}
+			}
+		}
+	}
+}
+void MoveY(){
+	if(e==1){
+		if(shape_check==1||shape_check==3){
+			for(int j = 0; j < 2; ++j){
+				for(int i = 0; i < shape[j].vertexData.size()/3; ++i) {
+					shape[j].move(0,0.0005f,0);
+				}
+			}
+
+		}
+		if(shape_check==2||shape_check==3){
+			for(int j = 2; j < 4; ++j){
+				for(int i = 0; i < shape[j].vertexData.size()/3; ++i) {
+					shape[j].move(0,0.0005f,0);
+				}
+			}
+		}
+	} else if(e==2){
+		if(shape_check==1||shape_check==3){
+			for(int j = 0; j < 2; ++j){
+				for(int i = 0; i < shape[j].vertexData.size()/3; ++i) {
+					shape[j].move(0,-0.0005f,0);
+				}
+			}
+
+		}
+		if(shape_check==2||shape_check==3){
+			for(int j = 2; j < 4; ++j){
+				for(int i = 0; i < shape[j].vertexData.size()/3; ++i) {
+					shape[j].move(0,-0.0005f,0);
+				}
+			}
+		}
+	}
+}
+void ChangeOne(){
+	// shape[0]과 shape[1] 위치 교환 (원점 찍었다가 이동)
+	if(shape_check == 1 || shape_check == 3) {
+		glm::vec3 centerA = shape[0].Center();
+		glm::vec3 centerB = shape[1].Center();
+
+		// 1. 두 도형을 원점으로 이동
+		for(int i = 0; i < shape[0].vertexData.size() / 3; ++i)
+			shape[0].move(-centerA.x,-centerA.y,-centerA.z);
+		for(int i = 0; i < shape[1].vertexData.size() / 3; ++i)
+			shape[1].move(-centerB.x,-centerB.y,-centerB.z);
+
+		// 2. 서로의 위치로 이동
+		for(int i = 0; i < shape[0].vertexData.size() / 3; ++i)
+			shape[0].move(centerB.x,centerB.y,centerB.z);
+		for(int i = 0; i < shape[1].vertexData.size() / 3; ++i)
+			shape[1].move(centerA.x,centerA.y,centerA.z);
+	}
+	// shape[2]와 shape[3] 위치 교환 (원점 찍었다가 이동)
+	if(shape_check == 2 || shape_check == 3) {
+		glm::vec3 centerA = shape[2].Center();
+		glm::vec3 centerB = shape[3].Center();
+
+		for(int i = 0; i < shape[2].vertexData.size() / 3; ++i)
+			shape[2].move(-centerA.x,-centerA.y,-centerA.z);
+		for(int i = 0; i < shape[3].vertexData.size() / 3; ++i)
+			shape[3].move(-centerB.x,-centerB.y,-centerB.z);
+
+		for(int i = 0; i < shape[2].vertexData.size() / 3; ++i)
+			shape[2].move(centerB.x,centerB.y,centerB.z);
+		for(int i = 0; i < shape[3].vertexData.size() / 3; ++i)
+			shape[3].move(centerA.x,centerA.y,centerA.z);
 	}
 }
 void TimerFunction(int value)
 {
 	X_rotate();
-	
-
+	Y_rotate();
+	Y_gong();
+	SizeUPDown();
+	SizeOne();
+	MoveX();
+	MoveY();
+	ChangeOne();
 
 	glutTimerFunc(10,TimerFunction,1);
 	glutPostRedisplay();
