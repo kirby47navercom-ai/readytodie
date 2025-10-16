@@ -709,7 +709,7 @@ void Keyboard(unsigned char key,int x,int y)
 	break;
 	case 'v':
 	if(!t&&!u){
-		v=true;
+		v=!v;
 	}
 	break;
 
@@ -753,29 +753,6 @@ void SpecialKeyboard(int key,int x,int y)
 	glutPostRedisplay();  // 재렌더링 요청
 }
 void X_rotate(){
-	/*if(x_==1){
-		if(shape_check==1||shape_check==3){
-			for(int i=0;i<shape[0].angle[1].size();++i)shape[0].angle[0][i] += x_rotate;
-			for(int i=0;i<shape[1].angle[1].size();++i)shape[1].angle[0][i] += x_rotate;
-
-		}
-		if(shape_check==2||shape_check==3){
-			for(int i=0;i<shape[2].angle[1].size();++i)shape[2].angle[0][i] += x_rotate;
-			for(int i=0;i<shape[3].angle[1].size();++i)shape[3].angle[0][i] += x_rotate;
-		}
-	} 
-	else if(x_==2){
-		if(shape_check==1||shape_check==3){
-			for(int i=0;i<shape[0].angle[1].size();++i)shape[0].angle[0][i] -= x_rotate;
-			for(int i=0;i<shape[1].angle[1].size();++i)shape[1].angle[0][i] -= x_rotate;
-
-		}
-		if(shape_check==2||shape_check==3){
-			for(int i=0;i<shape[2].angle[1].size();++i)shape[2].angle[0][i] -= x_rotate;
-			for(int i=0;i<shape[3].angle[1].size();++i)shape[3].angle[0][i] -= x_rotate;
-		}
-	}*/
-
 	if(x_==1){
 		if(shape_check==1||shape_check==3){
 			for(int j = 0; j < 2; ++j){
@@ -1130,37 +1107,223 @@ void MoveY(){
 	}
 }
 void ChangeOne(){
-	// shape[0]과 shape[1] 위치 교환 (원점 찍었다가 이동)
-	if(shape_check == 1 || shape_check == 3) {
-		glm::vec3 centerA = shape[0].Center();
-		glm::vec3 centerB = shape[1].Center();
+	if(t)
+	{
+		static bool to_origin = true;
+		static bool initialized = false;
+		static glm::vec3 target_pos[4];
+		float speed = 0.05f; // 이동 속도
 
-		// 1. 두 도형을 원점으로 이동
-		for(int i = 0; i < shape[0].vertexData.size() / 3; ++i)
-			shape[0].move(-centerA.x,-centerA.y,-centerA.z);
-		for(int i = 0; i < shape[1].vertexData.size() / 3; ++i)
-			shape[1].move(-centerB.x,-centerB.y,-centerB.z);
+		if(!initialized)
+		{
+			glm::vec3 c0 = shape[0].Center();
+			glm::vec3 c1 = shape[1].Center();
+			glm::vec3 c2 = shape[2].Center();
+			glm::vec3 c3 = shape[3].Center();
 
-		// 2. 서로의 위치로 이동
-		for(int i = 0; i < shape[0].vertexData.size() / 3; ++i)
-			shape[0].move(centerB.x,centerB.y,centerB.z);
-		for(int i = 0; i < shape[1].vertexData.size() / 3; ++i)
-			shape[1].move(centerA.x,centerA.y,centerA.z);
+			target_pos[0] = c2;
+			target_pos[2] = c0;
+			target_pos[1] = c3;
+			target_pos[3] = c1;
+
+			initialized = true;
+		}
+
+		if(to_origin)
+		{
+			bool all_origin = true;
+
+			for(int i = 0; i < 4; ++i)
+			{
+				glm::vec3 c = shape[i].Center();
+				glm::vec3 dir = glm::vec3(0,0,0) - c;
+
+				if(glm::length(dir) > 0.001f)
+				{
+					for(int j = 0; j < shape[i].vertexData.size() / 3; ++j)
+					{
+						shape[i].vertexData[j * 3 + 0] += dir.x * speed;
+						shape[i].vertexData[j * 3 + 1] += dir.y * speed;
+						shape[i].vertexData[j * 3 + 2] += dir.z * speed;
+					}
+					all_origin = false;
+				}
+			}
+
+			if(all_origin)
+				to_origin = false;
+		} else
+		{
+			bool all_done = true;
+
+			for(int i = 0; i < 4; ++i)
+			{
+				glm::vec3 c = shape[i].Center();
+				glm::vec3 dir = target_pos[i] - c;
+
+				if(glm::length(dir) > 0.001f)
+				{
+					for(int j = 0; j < shape[i].vertexData.size() / 3; ++j)
+					{
+						shape[i].vertexData[j * 3 + 0] += dir.x * speed;
+						shape[i].vertexData[j * 3 + 1] += dir.y * speed;
+						shape[i].vertexData[j * 3 + 2] += dir.z * speed;
+					}
+					all_done = false;
+				}
+			}
+
+			if(all_done)
+			{
+				t = false;
+				to_origin = true;
+				initialized = false;
+			}
+		}
 	}
-	// shape[2]와 shape[3] 위치 교환 (원점 찍었다가 이동)
-	if(shape_check == 2 || shape_check == 3) {
-		glm::vec3 centerA = shape[2].Center();
-		glm::vec3 centerB = shape[3].Center();
 
-		for(int i = 0; i < shape[2].vertexData.size() / 3; ++i)
-			shape[2].move(-centerA.x,-centerA.y,-centerA.z);
-		for(int i = 0; i < shape[3].vertexData.size() / 3; ++i)
-			shape[3].move(-centerB.x,-centerB.y,-centerB.z);
+}
+void ChangeUpDown(){
+	if (u)
+{
+    static bool move_updown = true;
+    static bool initialized = false;
+    static glm::vec3 target_pos[4];
+	static glm::vec3 original_pos[4];
+    float speed = 0.05f; // 이동 속도 (점진적)
 
-		for(int i = 0; i < shape[2].vertexData.size() / 3; ++i)
-			shape[2].move(centerB.x,centerB.y,centerB.z);
-		for(int i = 0; i < shape[3].vertexData.size() / 3; ++i)
-			shape[3].move(centerA.x,centerA.y,centerA.z);
+    if (!initialized)
+    {
+        glm::vec3 c0 = shape[0].Center();
+        glm::vec3 c1 = shape[1].Center();
+        glm::vec3 c2 = shape[2].Center();
+        glm::vec3 c3 = shape[3].Center();
+
+        // 1단계 목표 (위/아래로 이동)
+        target_pos[0] = glm::vec3(c0.x, c0.y + 3.0f, c0.z);
+        target_pos[1] = glm::vec3(c1.x, c1.y + 3.0f, c1.z);
+        target_pos[2] = glm::vec3(c2.x, c2.y - 3.0f, c2.z);
+        target_pos[3] = glm::vec3(c3.x, c3.y - 3.0f, c3.z);
+
+		original_pos[0] = c2;
+		original_pos[2] = c0;
+		original_pos[1] = c3;
+		original_pos[3] = c1;
+
+        initialized = true;
+    }
+
+    if (move_updown)
+    {
+        bool all_done = true;
+
+        for (int i = 0; i < 4; ++i)
+        {
+            glm::vec3 c = shape[i].Center();
+            glm::vec3 dir = target_pos[i] - c;
+
+            if (glm::length(dir) > 0.001f)
+            {
+                for (int j = 0; j < shape[i].vertexData.size() / 3; ++j)
+                {
+                    shape[i].vertexData[j * 3 + 0] += dir.x * speed;
+                    shape[i].vertexData[j * 3 + 1] += dir.y * speed;
+                    shape[i].vertexData[j * 3 + 2] += dir.z * speed;
+                }
+                all_done = false;
+            }
+        }
+
+        if (all_done)
+        {
+            // 위아래 이동 완료 후 교환 준비
+            move_updown = false;
+
+            // 교체 목표 위치 설정
+            glm::vec3 c0 = shape[0].Center();
+            glm::vec3 c1 = shape[1].Center();
+            glm::vec3 c2 = shape[2].Center();
+            glm::vec3 c3 = shape[3].Center();
+
+            target_pos[0] = c2;
+            target_pos[2] = c0;
+            target_pos[1] = c3;
+            target_pos[3] = c1;
+        }
+    }
+    else
+    {
+        bool all_swapped = true;
+
+        for (int i = 0; i < 4; ++i)
+        {
+            glm::vec3 c = shape[i].Center();
+            glm::vec3 dir = original_pos[i] - c;
+
+            if (glm::length(dir) > 0.001f)
+            {
+                for (int j = 0; j < shape[i].vertexData.size() / 3; ++j)
+                {
+                    shape[i].vertexData[j * 3 + 0] += dir.x * speed;
+                    shape[i].vertexData[j * 3 + 1] += dir.y * speed;
+                    shape[i].vertexData[j * 3 + 2] += dir.z * speed;
+                }
+                all_swapped = false;
+            }
+        }
+
+        if (all_swapped)
+        {
+            u = false;
+            move_updown = true;
+            initialized = false;
+        }
+    }
+}
+}
+void Allmove(){
+	if(v){
+		
+			
+		for(int j = 0; j < 2; ++j){
+			float cx = 0,cy = 0,cz = 0;
+			for(int i = 0; i < shape[j].vertexData.size()/3; ++i) {
+				cx += shape[j].vertexData[i * 3 + 0];
+				cy += shape[j].vertexData[i * 3 + 1];
+				cz += shape[j].vertexData[i * 3 + 2];
+			}
+			cx /=shape[j].vertexData.size()/3;
+			cy /=shape[j].vertexData.size()/3;
+			cz /=shape[j].vertexData.size()/3;
+
+			for(int i = 0; i < shape[j].vertexData.size()/3; ++i) {
+				shape[j].RotateWorld(cx,cy,cz,glm::radians(x_rotate),i,1);
+				shape[j].Scale(cx,cy,cz,1.001f,i);
+			}
+		}
+		for(int i=0;i<shape[0].angle[1].size();++i)shape[0].angle[1][i] += y_rotate;
+		for(int i=0;i<shape[1].angle[1].size();++i)shape[1].angle[1][i] += y_rotate;
+	
+	
+		for(int j = 2; j < 4; ++j){
+			float cx = 0,cy = 0,cz = 0;
+			for(int i = 0; i < shape[j].vertexData.size()/3; ++i) {
+				cx += shape[j].vertexData[i * 3 + 0];
+				cy += shape[j].vertexData[i * 3 + 1];
+				cz += shape[j].vertexData[i * 3 + 2];
+			}
+			cx /=shape[j].vertexData.size()/3;
+			cy /=shape[j].vertexData.size()/3;
+			cz /=shape[j].vertexData.size()/3;
+
+			for(int i = 0; i < shape[j].vertexData.size()/3; ++i) {
+				shape[j].RotateWorld(cx,cy,cz,glm::radians(x_rotate),i,1);
+				shape[j].Scale(cx,cy,cz,0.999f,i);
+			}
+		}
+		for(int i=0;i<shape[2].angle[1].size();++i)shape[2].angle[1][i] += y_rotate;
+		for(int i=0;i<shape[3].angle[1].size();++i)shape[3].angle[1][i] += y_rotate;
+		
 	}
 }
 void TimerFunction(int value)
@@ -1173,6 +1336,8 @@ void TimerFunction(int value)
 	MoveX();
 	MoveY();
 	ChangeOne();
+	ChangeUpDown();
+	Allmove();
 
 	glutTimerFunc(10,TimerFunction,1);
 	glutPostRedisplay();
