@@ -395,7 +395,7 @@ int main(int argc,char** argv) {
 	model.push_back(read_obj_file("pyramid.obj"));
 
 	model.push_back(read_obj_file("pyramid.obj"));
-	model.push_back(read_obj_file("cube.obj"));
+	model.push_back(read_obj_file("sphere.obj"));
 
 	InitBuffers();
 	InitData();
