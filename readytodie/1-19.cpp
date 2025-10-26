@@ -53,11 +53,13 @@ class Shape{
 public:
 	vector<GLfloat> vertexData;
 	vector<GLuint> indices;
-	vector<glm::vec3>colors;
-	glm::vec3 scale={1.0f,1.0f,1.0f};
-	glm::vec3 translate={0.0f,0.0f,0.0f};
+	float t=0.0f;
+	float s=0.0f;
+	float r=0.0f;
+	glm::vec3 colors;
+	glm::mat4 modelMat = glm::mat4(1.0f);
 	int shape_num;
-	vector<float> angle[3];
+	glm::vec3 angle;
 	Shape(Model model,int i){
 		vertexData.clear();
 		InitBuffer(model);
@@ -67,9 +69,6 @@ public:
 
 	void InitBuffer(Model model){
 		vertexData.clear();
-		angle[0].clear();
-		angle[1].clear();
-		angle[2].clear();
 		// 모든 face의 꼭짓점 좌표를 중복 포함해서 vertexData에 추가
 		for(size_t i = 0; i < model.face_count; ++i) {
 			Face f = model.faces[i];
@@ -88,10 +87,6 @@ public:
 			vertexData.push_back(v3.x);
 			vertexData.push_back(v3.y);
 			vertexData.push_back(v3.z);
-			// 각 꼭짓점에 대한 회전 각도 초기화 (0으로 설정)
-			angle[0].push_back(0.0f);
-			angle[1].push_back(0.0f);
-			angle[2].push_back(0.0f);
 		}
 		// 인덱스는 필요 없으므로 비워둡니다
 		indices.clear();
@@ -116,15 +111,13 @@ public:
 		//}
 	}
 	void ColorRandom(Model model){
-		colors.clear();
-		for(size_t i = 0; i < model.face_count; ++i) {
-			for(int j=0;j<3;++j){
-				float r = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
-				float g = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
-				float b = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
-				colors.push_back(glm::vec3(r,g,b));
-			}
-		}
+		colors={0.0f,0.0f,0.0f};
+
+		float r = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
+		float g = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
+		float b = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
+		colors=glm::vec3(r,g,b);
+
 	}
 	void move(float x,float y,float z){
 		for(size_t i=0;i<vertexData.size()/3;++i){
@@ -213,7 +206,6 @@ public:
 		vertexData[start + 1] = (vertexData[start + 1] - cy) * scale + cy;
 		vertexData[start + 2] = (vertexData[start + 2] - cz) * scale + cz;
 	}
-
 	glm::vec3 Center(){
 		glm::vec3 center(0.0f);
 		for(int i = 0; i < vertexData.size()/3; ++i) {
@@ -223,6 +215,11 @@ public:
 		}
 		center /= static_cast<float>(vertexData.size()/3);
 		return center;
+	}
+	glm::vec3 ToWorldPos(const glm::vec3& localPos)
+	{
+		glm::vec4 world = modelMat * glm::vec4(localPos,1.0f);
+		return glm::vec3(world);
 	}
 
 
@@ -243,55 +240,106 @@ void read_newline(char* str) {
 
 Model read_obj_file(const char* filename) {
 	FILE* file;
-	Model model{}; // 강제 초기화: 모든 멤버 0 또는 nullptr로 초기화
+	Model model{};
 
+	// 파일 열기 (fopen_s를 사용하므로 Visual Studio 환경에 적합)
 	fopen_s(&file,filename,"r");
 	if(!file) {
 		perror("Error opening file");
 		exit(EXIT_FAILURE);
 	}
 
-	char line[365];
-	model.vertex_count = 0;
-	model.face_count = 0;
+	// 임시 벡터를 사용하여 동적으로 정점 및 면 데이터를 저장합니다.
+	std::vector<Vertex> temp_vertices;
+	std::vector<Face> temp_faces;
 
+	char line[365];
 	while(fgets(line,sizeof(line),file)) {
 		read_newline(line);
-		if(line[0] == 'v' && line[1] == ' ')
-			model.vertex_count++;
-		else if(line[0] == 'f' && line[1] == ' ')
-			model.face_count++;
+
+		// v 라인 처리
+		if(line[0] == 'v' && line[1] == ' ') {
+			Vertex v;
+			if(sscanf_s(line + 2,"%f %f %f",&v.x,&v.y,&v.z) == 3) {
+				temp_vertices.push_back(v);
+			}
+		}
+		// f 라인 처리 - N각형을 삼각 분할(Triangulation)합니다.
+		else if(line[0] == 'f' && line[1] == ' ') {
+			char face_str[365];
+			// 원본 라인을 훼손하지 않기 위해 복사 (strtok 사용을 위함)
+			// '제목 없음.obj' 파일이 'f v1 v2 v3 v4...' 형식이라고 가정합니다.
+			if(strlen(line + 2) >= sizeof(face_str)) {
+				// 버퍼 오버플로우 방지 (필요 시 더 큰 버퍼 사용)
+				continue;
+			}
+			strcpy_s(face_str,sizeof(face_str),line + 2);
+
+			// strtok를 사용하여 공백으로 분리된 각 정점 데이터를 가져옵니다.
+			char* token = strtok(face_str," ");
+			std::vector<unsigned int> face_indices; // 면을 이루는 정점 인덱스 저장
+
+			// 토큰(정점 인덱스)을 읽습니다.
+			while(token != NULL) {
+				unsigned int v_idx;
+
+				// v/vt/vn 형태일 경우, 첫 '/' 이전의 v만 파싱
+				if(strchr(token,'/') != NULL) {
+					// v/vt/vn 형태일 경우, 첫 '/' 이전의 v만 파싱
+					if(sscanf_s(token,"%u",&v_idx) == 1) {
+						face_indices.push_back(v_idx - 1); // 1-based index를 0-based index로 변환
+					}
+				} else {
+					// v 형태일 경우, v만 파싱
+					if(sscanf_s(token,"%u",&v_idx) == 1) {
+						face_indices.push_back(v_idx - 1); // 1-based index를 0-based index로 변환
+					}
+				}
+				token = strtok(NULL," ");
+			}
+
+			// N각형(N >= 3) 면을 삼각 분할(Fan Triangulation)하여 저장합니다.
+			if(face_indices.size() >= 3) {
+				// 0번 인덱스를 중심으로 삼각형을 만듭니다. (0, 1, 2), (0, 2, 3), (0, 3, 4)...
+				for(size_t i = 1; i < face_indices.size() - 1; ++i) {
+					Face f;
+					f.v1 = face_indices[0]; // 중심점
+					f.v2 = face_indices[i];
+					f.v3 = face_indices[i + 1];
+					temp_faces.push_back(f);
+				}
+			}
+		}
 	}
+	fclose(file);
 
-	fseek(file,0,SEEK_SET);
+	// 최종적으로 모델 구조체에 동적 할당 및 복사합니다.
+	model.vertex_count = temp_vertices.size();
+	model.face_count = temp_faces.size();
 
+	// 기존 코드가 malloc/free를 사용하므로 이 방식을 유지합니다.
 	model.vertices = (Vertex*)malloc(model.vertex_count * sizeof(Vertex));
 	model.faces = (Face*)malloc(model.face_count * sizeof(Face));
 
-	size_t vertex_index = 0;
-	size_t face_index = 0;
-	while(fgets(line,sizeof(line),file)) {
-		read_newline(line);
-		if(line[0] == 'v' && line[1] == ' ') {
-			sscanf_s(line + 2,"%f %f %f",
-					 &model.vertices[vertex_index].x,
-					 &model.vertices[vertex_index].y,
-					 &model.vertices[vertex_index].z);
-			vertex_index++;
-		} else if(line[0] == 'f' && line[1] == ' ') {
-			unsigned int v1,v2,v3;
-			sscanf_s(line + 2,"%u %u %u",&v1,&v2,&v3);
-			model.faces[face_index].v1 = v1 - 1;
-			model.faces[face_index].v2 = v2 - 1;
-			model.faces[face_index].v3 = v3 - 1;
-			face_index++;
-		}
+	if(model.vertex_count > 0) {
+		std::copy(temp_vertices.begin(),temp_vertices.end(),model.vertices);
+	}
+	if(model.face_count > 0) {
+		std::copy(temp_faces.begin(),temp_faces.end(),model.faces);
 	}
 
-	fclose(file);
 	return model;
 }
+glm::vec3 Rotate(glm::vec3 x,glm::vec3 center,float angle,glm::vec3 axis)
+{
+	glm::mat4 model(1.0f);
+	model = glm::translate(model,center);
+	model = glm::rotate(model,angle,axis); // angle은 라디안, axis는 단위벡터
+	model = glm::translate(model,-center);
 
+	glm::vec4 v4 = model * glm::vec4(x,1.0f);
+	return glm::vec3(v4);
+}
 
 vector<Model> model;
 int facenum = -1;
@@ -307,19 +355,17 @@ float modelRotY = 0.0f;  // Y축 회전 각도 (라디안)
 float modelRotX = 0.0f;  // X축 회전 각도 (라디안)
 
 int shape_check = 0;
-int x_=0;
-int y_=0;
-int r=0;
-int a=0;
-int b=0;
-int d=0;
-int e=0;
+int ws_=0;
+int ad_=0;
+int pn_=0;
 bool t=false;
 bool u=false;
 bool v=false;
 bool c=false;
 bool silver=false;
 bool solid=false;
+
+glm::vec3 camera_move=glm::vec3(0.0f,0.0f,0.0f);
 
 
 float x_rotate=1.0f;
@@ -338,22 +384,39 @@ int scale_time=0;
 
 int move_num=0;
 
+glm::vec3 center = {0.0f,0.0f,0.0f};
+
 void InitData(){
 	shape.clear();
-	for(size_t i=0;i<7;++i){
-		shape.push_back(Shape(model[0],i));// Shape 생성 시 model 정보 전달
+	shape.push_back(Shape(model[0],0));
+	shape.back().modelMat=glm::scale(shape.back().modelMat,{0.05f,0.05f,0.05f});
+	shape.back().s=0.05f;
+	int a[3]={-45,0,45};
+	for(size_t i=1;i<7;++i){
+		shape.push_back(Shape(model[1],i));// Shape 생성 시 model 정보 전달
 		if(i==0){
-			shape[i].scale={5.0f,5.0f,5.0f};
-		}
-		else if(i<4){
-			shape[i].scale={3.0f,3.0f,3.0f};
-			shape[i].translate={0.5f,0.5f,0.5f};
-		}
-		else{
-			shape[i].scale={1.0f,1.0f,1.0f};
 
 		}
+		else if(i<4){
+			shape[i].modelMat=glm::rotate(shape.back().modelMat,glm::radians((float)a[i-1]),{1.0f,0.0f,1.0f});
+			shape[i].modelMat=glm::translate(shape.back().modelMat,{3.0f,0.0f,0.0f});
+			shape[i].modelMat=glm::scale(shape.back().modelMat,{3.0f,3.0f,3.0f});
+			shape[i].s=3.0f;
+			shape[i].t=3.0f;
+			shape[i].r=(float)a[i-1];
+		}
+		else{
+			shape[i].modelMat=glm::translate(shape.back().modelMat,shape[i-3].ToWorldPos(shape[i-3].Center()));
+			shape[i].modelMat=glm::rotate(shape.back().modelMat,glm::radians((float)a[i-4]),{1.0f,0.0f,1.0f});
+			shape[i].modelMat=glm::translate(shape.back().modelMat,{0.5f,0.0f,0.0f});
+			shape[i].modelMat=glm::scale(shape.back().modelMat,{1.0f,1.0f,1.0f});
+			shape[i].t=0.5f;
+			shape[i].s=1.0f;
+			shape[i].r=(float)a[i-4];
+		}
 	}
+
+
 	
 
 }
@@ -382,7 +445,7 @@ int main(int argc,char** argv) {
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH); // GLUT_DEPTH 추가
 	glutInitWindowPosition(100,100);
 	glutInitWindowSize(width,height);
-	glutCreateWindow("Prac");
+	glutCreateWindow("tung tung tung tung tung tung tung tung tung sours");
 
 	glewExperimental = GL_TRUE;
 	if(glewInit() != GLEW_OK) {
@@ -397,7 +460,7 @@ int main(int argc,char** argv) {
 		std::cerr << "셰이더 프로그램 생성 실패" << std::endl;
 		return -1;
 	}
-
+	model.push_back(read_obj_file("reni.obj"));
 	model.push_back(read_obj_file("sphere.obj"));
 
 	InitBuffers();
@@ -543,74 +606,75 @@ void DrawScene() {
 
 
 	//--------------------------------------------------------------------------
-	// 각 면(6 indices)마다 색상 uniform 설정 후 그리기
+	
+
 	GLuint offset = 0;
 	for(int i=0;i<shape.size();++i){
 		for(int j = 0; j < shape[i].vertexData.size() / 9; ++j){ // colors 개수 == face 개수
-			// 모델 매트릭스: 이동 + 회전 적용 (회전은 이동 후 적용되도록 순서 주의)
-			glm::mat4 modelMat = glm::mat4(1.0f);
-			modelMat = glm::translate(modelMat,modelPos);  // 먼저 이동 적용
-			modelMat = glm::rotate(modelMat,glm::radians(shape[i].angle[0][j]),glm::vec3(1.0f,0.0f,0.0f));  // X축 회전
-			modelMat = glm::rotate(modelMat,glm::radians(shape[i].angle[1][j]),glm::vec3(0.0f,1.0f,0.0f));  // Y축 회전
-			modelMat = glm::rotate(modelMat,glm::radians(shape[i].angle[2][j]),glm::vec3(0.0f,0.0f,1.0f));	// Z축 회전
-			modelMat = glm::scale(modelMat,shape[i].scale); // 스케일링 적용 (필요시)
-			modelMat = glm::translate(modelMat,shape[i].translate); // 이동
-			
-			
-			
-			
-			glUniformMatrix4fv(modelLoc,1,GL_FALSE,glm::value_ptr(modelMat));
-			glm::vec3 col = shape[i].colors[j];
-			
-			glUniform3f(faceColorLoc,col.r,col.g,col.b);
+			glUniformMatrix4fv(modelLoc,1,GL_FALSE,glm::value_ptr(shape[i].modelMat));
+			glUniform3f(faceColorLoc,shape[i].colors[0],shape[i].colors[1],shape[i].colors[2]);
 			glDrawArrays(GL_TRIANGLES,offset,3);
 			offset += 3;
 		}
 	}
 
-
 	//--------------------------------------------------------------------------
 	// Camera (View) 및 Projection 매트릭스 설정
-	glm::mat4 view = glm::lookAt(cameraPos,glm::vec3(0.0f,0.0f,0.0f),glm::vec3(0.0f,1.0f,0.0f)); // 뷰 매트릭스
+	glm::mat4 view = glm::lookAt(cameraPos,glm::vec3(camera_move),glm::vec3(0.0f,1.0f,0.0f)); // 뷰 매트릭스
 	glm::mat4 proj = glm::perspective(glm::radians(45.0f),(float)width / (float)height,0.1f,100.0f); // 프로젝션 매트릭스
 
 	glUniformMatrix4fv(viewLoc,1,GL_FALSE,glm::value_ptr(view));
 	glUniformMatrix4fv(projLoc,1,GL_FALSE,glm::value_ptr(proj));
 
 
-	//---------------------------------------------------------------------------
-	// XYZ 축 
 	glm::mat4 axisModelMat = glm::mat4(1.0f);
 	glUniformMatrix4fv(modelLoc,1,GL_FALSE,glm::value_ptr(axisModelMat));
 
-	std::vector<GLfloat> axesData = {
-		// X축
-		-5.0f,0.0f,0.0f,  // 시작
-		5.0f,0.0f,0.0f,  // 끝
 
-		// Y축
-		0.0f,-5.0f,0.0f,
-		0.0f,5.0f,0.0f,
 
-		// Z축
-		0.0f,0.0f,-5.0f,
-		0.0f,0.0f,5.0f
-	};
+	vector<glm::vec3>all;
+
+	vector<glm::vec3> big_vertex1;
+	big_vertex1.push_back(shape[1].ToWorldPos(shape[1].Center()));
+	vector<glm::vec3> big_vertex2;
+	big_vertex2.push_back(shape[2].ToWorldPos(shape[2].Center()));
+	vector<glm::vec3> big_vertex3;
+	big_vertex3.push_back(shape[3].ToWorldPos(shape[3].Center()));
+	vector<glm::vec3> small_vertex1;
+	small_vertex1.push_back(shape[4].ToWorldPos(shape[4].Center()));
+	vector<glm::vec3> small_vertex2;
+	small_vertex2.push_back(shape[5].ToWorldPos(shape[5].Center()));
+	vector<glm::vec3> small_vertex3;
+	small_vertex3.push_back(shape[6].ToWorldPos(shape[6].Center()));
+
+	for(int i=1;i<90;++i){
+		big_vertex1.push_back(Rotate(big_vertex1[i-1],center,glm::radians(4.0f),glm::vec3(0,0.707f,-0.707f)));
+		big_vertex2.push_back(Rotate(big_vertex2[i-1],center,glm::radians(4.0f),glm::vec3(0,1.0f,0.0f)));
+		big_vertex3.push_back(Rotate(big_vertex3[i-1],center,glm::radians(4.0f),glm::vec3(0,0.707f,0.707f)));
+		small_vertex1.push_back(Rotate(small_vertex1[i-1],shape[1].ToWorldPos(shape[1].Center()),glm::radians(4.0f),glm::vec3(0,0.707f,-0.707f)));
+		small_vertex2.push_back(Rotate(small_vertex2[i-1],shape[2].ToWorldPos(shape[2].Center()),glm::radians(4.0f),glm::vec3(0,1.0f,0.0f)));
+		small_vertex3.push_back(Rotate(small_vertex3[i-1],shape[3].ToWorldPos(shape[3].Center()),glm::radians(4.0f),glm::vec3(0,0.707f,0.707f)));
+	}
+	all.insert(all.end(),big_vertex1.begin(),big_vertex1.end());
+	all.insert(all.end(),big_vertex2.begin(),big_vertex2.end());
+	all.insert(all.end(),big_vertex3.begin(),big_vertex3.end());
+	all.insert(all.end(),small_vertex1.begin(),small_vertex1.end());
+	all.insert(all.end(),small_vertex2.begin(),small_vertex2.end());
+	all.insert(all.end(),small_vertex3.begin(),small_vertex3.end());
 
 	// 축용 VBO 업로드 (위치만, 색상 uniform 사용)
-	glBufferData(GL_ARRAY_BUFFER,axesData.size() * sizeof(GLfloat),axesData.data(),GL_DYNAMIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER,all.size() * sizeof(glm::vec3),all.data(),GL_DYNAMIC_DRAW);
 
-	// X축
-	glUniform3f(faceColorLoc,1.0f,0.0f,0.0f);
-	glDrawArrays(GL_LINES,0,2);
-
-	// Y축 
-	glUniform3f(faceColorLoc,0.0f,0.0f,1.0f);
-	glDrawArrays(GL_LINES,2,2);
-
-	// Z축 
-	glUniform3f(faceColorLoc,0.0f,1.0f,0.0f);
-	glDrawArrays(GL_LINES,4,2);
+	
+	glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,sizeof(glm::vec3),(void*)0);
+	glEnableVertexAttribArray(0);
+	
+	glPointSize(1.0f);
+	glUniform3f(faceColorLoc,1.0f,1.0f,1.0f);
+	for(int i=0;i<all.size();++i){
+		glDrawArrays(GL_POINTS,i,1);
+		//cout<< big_vertex1[i].x<<" "<< big_vertex1[i].y<<" "<< big_vertex1[i].z<<endl;
+	}
 
 	glBindVertexArray(0);
 	glutSwapBuffers();
@@ -637,17 +701,37 @@ void Keyboard(unsigned char key,int x,int y)
 	case 'm':
 	silver = !silver;
 	break;
-
+	case 'w':
+	++ws_;
+	break;
 	case 's':
+	--ws_;
+	break;
+	case 'a':
+	--ad_;
+	break;
+	case 'd':
+	++ad_;
+	break;
+	case '+':
+	++pn_;
+	break;
+	case '-':
+	--pn_;
+	break;
+	case 'y':
+	for(int i=0;i<shape.size();++i){
+		shape[i].t+=1.0f;
+	}
+	break;
+	case 'Y':
+	for(int i=0;i<shape.size();++i){
+		shape[i].t-=1.0f;
+	}
+	break;
+	case 'k':
 	InitData();
 	shape_check = 0;
-	x_=0;
-	y_=0;
-	r=0;
-	a=0;
-	b=0;
-	d=0;
-	e=0;
 	t=false;
 	u=false;
 	v=false;
@@ -673,591 +757,50 @@ void SpecialKeyboard(int key,int x,int y)
 
 	glutPostRedisplay();  // 재렌더링 요청
 }
-void X_rotate(){
-	if(x_==1){
-		if(shape_check==1||shape_check==3){
-			for(int j = 0; j < 2; ++j){
-				float cx = 0,cy = 0,cz = 0;
-				for(int i = 0; i < shape[j].vertexData.size()/3; ++i) {
-					cx += shape[j].vertexData[i * 3 + 0];
-					cy += shape[j].vertexData[i * 3 + 1];
-					cz += shape[j].vertexData[i * 3 + 2];
-				}
-				cx /=shape[j].vertexData.size()/3;
-				cy /=shape[j].vertexData.size()/3;
-				cz /=shape[j].vertexData.size()/3;
 
-				for(int i = 0; i < shape[j].vertexData.size()/3; ++i) {
-					shape[j].RotateWorld(cx,cy,cz,glm::radians(x_rotate),i,1);
-				}
-			}
-
-		}
-		if(shape_check==2||shape_check==3){
-			for(int j = 2; j < 4; ++j){
-				float cx = 0,cy = 0,cz = 0;
-				for(int i = 0; i < shape[j].vertexData.size()/3; ++i) {
-					cx += shape[j].vertexData[i * 3 + 0];
-					cy += shape[j].vertexData[i * 3 + 1];
-					cz += shape[j].vertexData[i * 3 + 2];
-				}
-				cx /=shape[j].vertexData.size()/3;
-				cy /=shape[j].vertexData.size()/3;
-				cz /=shape[j].vertexData.size()/3;
-
-				for(int i = 0; i < shape[j].vertexData.size()/3; ++i) {
-					shape[j].RotateWorld(cx,cy,cz,glm::radians(x_rotate),i,1);
-				}
-			}
-		}
-	} else if(x_==2){
-		if(shape_check==1||shape_check==3){
-			for(int j = 0; j < 2; ++j){
-				float cx = 0,cy = 0,cz = 0;
-				for(int i = 0; i < shape[j].vertexData.size()/3; ++i) {
-					cx += shape[j].vertexData[i * 3 + 0];
-					cy += shape[j].vertexData[i * 3 + 1];
-					cz += shape[j].vertexData[i * 3 + 2];
-				}
-				cx /=shape[j].vertexData.size()/3;
-				cy /=shape[j].vertexData.size()/3;
-				cz /=shape[j].vertexData.size()/3;
-
-				for(int i = 0; i < shape[j].vertexData.size()/3; ++i) {
-					shape[j].RotateWorld(cx,cy,cz,glm::radians(-x_rotate),i,1);
-				}
-			}
-
-		}
-		if(shape_check==2||shape_check==3){
-			for(int j = 2; j < 4; ++j){
-				float cx = 0,cy = 0,cz = 0;
-				for(int i = 0; i < shape[j].vertexData.size()/3; ++i) {
-					cx += shape[j].vertexData[i * 3 + 0];
-					cy += shape[j].vertexData[i * 3 + 1];
-					cz += shape[j].vertexData[i * 3 + 2];
-				}
-				cx /=shape[j].vertexData.size()/3;
-				cy /=shape[j].vertexData.size()/3;
-				cz /=shape[j].vertexData.size()/3;
-
-				for(int i = 0; i < shape[j].vertexData.size()/3; ++i) {
-					shape[j].RotateWorld(cx,cy,cz,glm::radians(-x_rotate),i,1);
-				}
-			}
-		}
-	}
-}
-void Y_rotate(){
-	if(y_==1){
-		if(shape_check==1||shape_check==3){
-			for(int j = 0; j < 2; ++j){
-				float cx = 0,cy = 0,cz = 0;
-				for(int i = 0; i < shape[j].vertexData.size()/3; ++i) {
-					cx += shape[j].vertexData[i * 3 + 0];
-					cy += shape[j].vertexData[i * 3 + 1];
-					cz += shape[j].vertexData[i * 3 + 2];
-				}
-				cx /=shape[j].vertexData.size()/3;
-				cy /=shape[j].vertexData.size()/3;
-				cz /=shape[j].vertexData.size()/3;
-
-				for(int i = 0; i < shape[j].vertexData.size()/3; ++i) {
-					shape[j].RotateWorld(cx,cy,cz,glm::radians(y_rotate),i,2);
-				}
-			}
-
-		}
-		if(shape_check==2||shape_check==3){
-			for(int j = 2; j < 4; ++j){
-				float cx = 0,cy = 0,cz = 0;
-				for(int i = 0; i < shape[j].vertexData.size()/3; ++i) {
-					cx += shape[j].vertexData[i * 3 + 0];
-					cy += shape[j].vertexData[i * 3 + 1];
-					cz += shape[j].vertexData[i * 3 + 2];
-				}
-				cx /=shape[j].vertexData.size()/3;
-				cy /=shape[j].vertexData.size()/3;
-				cz /=shape[j].vertexData.size()/3;
-
-				for(int i = 0; i < shape[j].vertexData.size()/3; ++i) {
-					shape[j].RotateWorld(cx,cy,cz,glm::radians(y_rotate),i,2);
-				}
-			}
-		}
-	} else if(y_==2){
-		if(shape_check==1||shape_check==3){
-			for(int j = 0; j < 2; ++j){
-				float cx = 0,cy = 0,cz = 0;
-				for(int i = 0; i < shape[j].vertexData.size()/3; ++i) {
-					cx += shape[j].vertexData[i * 3 + 0];
-					cy += shape[j].vertexData[i * 3 + 1];
-					cz += shape[j].vertexData[i * 3 + 2];
-				}
-				cx /=shape[j].vertexData.size()/3;
-				cy /=shape[j].vertexData.size()/3;
-				cz /=shape[j].vertexData.size()/3;
-
-				for(int i = 0; i < shape[j].vertexData.size()/3; ++i) {
-					shape[j].RotateWorld(cx,cy,cz,glm::radians(-y_rotate),i,2);
-				}
-			}
-
-		}
-		if(shape_check==2||shape_check==3){
-			for(int j = 2; j < 4; ++j){
-				float cx = 0,cy = 0,cz = 0;
-				for(int i = 0; i < shape[j].vertexData.size()/3; ++i) {
-					cx += shape[j].vertexData[i * 3 + 0];
-					cy += shape[j].vertexData[i * 3 + 1];
-					cz += shape[j].vertexData[i * 3 + 2];
-				}
-				cx /=shape[j].vertexData.size()/3;
-				cy /=shape[j].vertexData.size()/3;
-				cz /=shape[j].vertexData.size()/3;
-
-				for(int i = 0; i < shape[j].vertexData.size()/3; ++i) {
-					shape[j].RotateWorld(cx,cy,cz,glm::radians(-y_rotate),i,2);
-				}
-			}
-		}
-	}
-}
-void Y_gong(){
-	if(r==1){
-		if(shape_check==1||shape_check==3){
-			for(int i=0;i<shape[0].angle[1].size();++i)shape[0].angle[1][i] += y_rotate;
-			for(int i=0;i<shape[1].angle[1].size();++i)shape[1].angle[1][i] += y_rotate;
-
-		}
-		if(shape_check==2||shape_check==3){
-			for(int i=0;i<shape[2].angle[1].size();++i)shape[2].angle[1][i] += y_rotate;
-			for(int i=0;i<shape[3].angle[1].size();++i)shape[3].angle[1][i] += y_rotate;
-		}
-	} else if(r==2){
-		if(shape_check==1||shape_check==3){
-			for(int i=0;i<shape[0].angle[1].size();++i)shape[0].angle[1][i] -= y_rotate;
-			for(int i=0;i<shape[1].angle[1].size();++i)shape[1].angle[1][i] -= y_rotate;
-
-		}
-		if(shape_check==2||shape_check==3){
-			for(int i=0;i<shape[2].angle[1].size();++i)shape[2].angle[1][i] -= y_rotate;
-			for(int i=0;i<shape[3].angle[1].size();++i)shape[3].angle[1][i] -= y_rotate;
-		}
-	}
-}
-void SizeUPDown(){
-	if(a==1){
-		if(shape_check==1||shape_check==3){
-			for(int j = 0; j < 2; ++j){
-				float cx = 0,cy = 0,cz = 0;
-				for(int i = 0; i < shape[j].vertexData.size()/3; ++i) {
-					cx += shape[j].vertexData[i * 3 + 0];
-					cy += shape[j].vertexData[i * 3 + 1];
-					cz += shape[j].vertexData[i * 3 + 2];
-				}
-				cx /=shape[j].vertexData.size()/3;
-				cy /=shape[j].vertexData.size()/3;
-				cz /=shape[j].vertexData.size()/3;
-
-				for(int i = 0; i < shape[j].vertexData.size()/3; ++i) {
-					shape[j].Scale(cx,cy,cz,1.01001f,i);
-				}
-			}
-
-		}
-		if(shape_check==2||shape_check==3){
-			for(int j = 2; j < 4; ++j){
-				float cx = 0,cy = 0,cz = 0;
-				for(int i = 0; i < shape[j].vertexData.size()/3; ++i) {
-					cx += shape[j].vertexData[i * 3 + 0];
-					cy += shape[j].vertexData[i * 3 + 1];
-					cz += shape[j].vertexData[i * 3 + 2];
-				}
-				cx /=shape[j].vertexData.size()/3;
-				cy /=shape[j].vertexData.size()/3;
-				cz /=shape[j].vertexData.size()/3;
-
-				for(int i = 0; i < shape[j].vertexData.size()/3; ++i) {
-					shape[j].Scale(cx,cy,cz,1.01001f,i);
-				}
-			}
-		}
-	} else if(a==2){
-		if(shape_check==1||shape_check==3){
-			for(int j = 0; j < 2; ++j){
-				float cx = 0,cy = 0,cz = 0;
-				for(int i = 0; i < shape[j].vertexData.size()/3; ++i) {
-					cx += shape[j].vertexData[i * 3 + 0];
-					cy += shape[j].vertexData[i * 3 + 1];
-					cz += shape[j].vertexData[i * 3 + 2];
-				}
-				cx /=shape[j].vertexData.size()/3;
-				cy /=shape[j].vertexData.size()/3;
-				cz /=shape[j].vertexData.size()/3;
-
-				for(int i = 0; i < shape[j].vertexData.size()/3; ++i) {
-					shape[j].Scale(cx,cy,cz,0.99f,i);
-				}
-			}
-
-		}
-		if(shape_check==2||shape_check==3){
-			for(int j = 2; j < 4; ++j){
-				float cx = 0,cy = 0,cz = 0;
-				for(int i = 0; i < shape[j].vertexData.size()/3; ++i) {
-					cx += shape[j].vertexData[i * 3 + 0];
-					cy += shape[j].vertexData[i * 3 + 1];
-					cz += shape[j].vertexData[i * 3 + 2];
-				}
-				cx /=shape[j].vertexData.size()/3;
-				cy /=shape[j].vertexData.size()/3;
-				cz /=shape[j].vertexData.size()/3;
-
-				for(int i = 0; i < shape[j].vertexData.size()/3; ++i) {
-					shape[j].Scale(cx,cy,cz,0.99f,i);
-				}
-			}
-		}
-	}
-}
-void SizeOne(){
-	if(b==1){
-		if(shape_check==1||shape_check==3){
-			for(int j = 0; j < 2; ++j){
-				for(int i = 0; i < shape[j].vertexData.size()/3; ++i) {
-					shape[j].Scale(0,0,0,1.01001f,i);
-				}
-			}
-
-		}
-		if(shape_check==2||shape_check==3){
-			for(int j = 2; j < 4; ++j){
-				for(int i = 0; i < shape[j].vertexData.size()/3; ++i) {
-					shape[j].Scale(0,0,0,1.01001f,i);
-				}
-			}
-		}
-	} else if(b==2){
-		if(shape_check==1||shape_check==3){
-			for(int j = 0; j < 2; ++j){
-				for(int i = 0; i < shape[j].vertexData.size()/3; ++i) {
-					shape[j].Scale(0,0,0,0.99f,i);
-				}
-			}
-
-		}
-		if(shape_check==2||shape_check==3){
-			for(int j = 2; j < 4; ++j){
-				for(int i = 0; i < shape[j].vertexData.size()/3; ++i) {
-					shape[j].Scale(0,0,0,0.99f,i);
-				}
-			}
-		}
-	}
-}
-void MoveX(){
-	if(d==1){
-		if(shape_check==1||shape_check==3){
-			for(int j = 0; j < 2; ++j){
-				for(int i = 0; i < shape[j].vertexData.size()/3; ++i) {
-					shape[j].move(0.0005f,0,0);
-				}
-			}
-
-		}
-		if(shape_check==2||shape_check==3){
-			for(int j = 2; j < 4; ++j){
-				for(int i = 0; i < shape[j].vertexData.size()/3; ++i) {
-					shape[j].move(0.0005f,0,0);
-				}
-			}
-		}
-	} else if(d==2){
-		if(shape_check==1||shape_check==3){
-			for(int j = 0; j < 2; ++j){
-				for(int i = 0; i < shape[j].vertexData.size()/3; ++i) {
-					shape[j].move(-0.0005f,0,0);
-				}
-			}
-
-		}
-		if(shape_check==2||shape_check==3){
-			for(int j = 2; j < 4; ++j){
-				for(int i = 0; i < shape[j].vertexData.size()/3; ++i) {
-					shape[j].move(-0.0005f,0,0);
-				}
-			}
-		}
-	}
-}
-void MoveY(){
-	if(e==1){
-		if(shape_check==1||shape_check==3){
-			for(int j = 0; j < 2; ++j){
-				for(int i = 0; i < shape[j].vertexData.size()/3; ++i) {
-					shape[j].move(0,0.0005f,0);
-				}
-			}
-
-		}
-		if(shape_check==2||shape_check==3){
-			for(int j = 2; j < 4; ++j){
-				for(int i = 0; i < shape[j].vertexData.size()/3; ++i) {
-					shape[j].move(0,0.0005f,0);
-				}
-			}
-		}
-	} else if(e==2){
-		if(shape_check==1||shape_check==3){
-			for(int j = 0; j < 2; ++j){
-				for(int i = 0; i < shape[j].vertexData.size()/3; ++i) {
-					shape[j].move(0,-0.0005f,0);
-				}
-			}
-
-		}
-		if(shape_check==2||shape_check==3){
-			for(int j = 2; j < 4; ++j){
-				for(int i = 0; i < shape[j].vertexData.size()/3; ++i) {
-					shape[j].move(0,-0.0005f,0);
-				}
-			}
-		}
-	}
-}
-void ChangeOne(){
-	if(t)
-	{
-		static bool to_origin = true;
-		static bool initialized = false;
-		static glm::vec3 target_pos[4];
-		float speed = 0.05f; // 이동 속도
-
-		if(!initialized)
-		{
-			glm::vec3 c0 = shape[0].Center();
-			glm::vec3 c1 = shape[1].Center();
-			glm::vec3 c2 = shape[2].Center();
-			glm::vec3 c3 = shape[3].Center();
-
-			target_pos[0] = c2;
-			target_pos[2] = c0;
-			target_pos[1] = c3;
-			target_pos[3] = c1;
-
-			initialized = true;
-		}
-
-		if(to_origin)
-		{
-			bool all_origin = true;
-
-			for(int i = 0; i < 4; ++i)
-			{
-				glm::vec3 c = shape[i].Center();
-				glm::vec3 dir = glm::vec3(0,0,0) - c;
-
-				if(glm::length(dir) > 0.001f)
-				{
-					for(int j = 0; j < shape[i].vertexData.size() / 3; ++j)
-					{
-						shape[i].vertexData[j * 3 + 0] += dir.x * speed;
-						shape[i].vertexData[j * 3 + 1] += dir.y * speed;
-						shape[i].vertexData[j * 3 + 2] += dir.z * speed;
-					}
-					all_origin = false;
-				}
-			}
-
-			if(all_origin)
-				to_origin = false;
-		} else
-		{
-			bool all_done = true;
-
-			for(int i = 0; i < 4; ++i)
-			{
-				glm::vec3 c = shape[i].Center();
-				glm::vec3 dir = target_pos[i] - c;
-
-				if(glm::length(dir) > 0.001f)
-				{
-					for(int j = 0; j < shape[i].vertexData.size() / 3; ++j)
-					{
-						shape[i].vertexData[j * 3 + 0] += dir.x * speed;
-						shape[i].vertexData[j * 3 + 1] += dir.y * speed;
-						shape[i].vertexData[j * 3 + 2] += dir.z * speed;
-					}
-					all_done = false;
-				}
-			}
-
-			if(all_done)
-			{
-				t = false;
-				to_origin = true;
-				initialized = false;
-			}
-		}
-	}
-
-}
-void ChangeUpDown(){
-	if(u)
-	{
-		static bool move_updown = true;
-		static bool initialized = false;
-		static glm::vec3 target_pos[4];
-		static glm::vec3 original_pos[4];
-		float speed = 0.05f; // 이동 속도 (점진적)
-
-		if(!initialized)
-		{
-			glm::vec3 c0 = shape[0].Center();
-			glm::vec3 c1 = shape[1].Center();
-			glm::vec3 c2 = shape[2].Center();
-			glm::vec3 c3 = shape[3].Center();
-
-			// 1단계 목표 (위/아래로 이동)
-			target_pos[0] = glm::vec3(c0.x,c0.y + 3.0f,c0.z);
-			target_pos[1] = glm::vec3(c1.x,c1.y + 3.0f,c1.z);
-			target_pos[2] = glm::vec3(c2.x,c2.y - 3.0f,c2.z);
-			target_pos[3] = glm::vec3(c3.x,c3.y - 3.0f,c3.z);
-
-			original_pos[0] = c2;
-			original_pos[2] = c0;
-			original_pos[1] = c3;
-			original_pos[3] = c1;
-
-			initialized = true;
-		}
-
-		if(move_updown)
-		{
-			bool all_done = true;
-
-			for(int i = 0; i < 4; ++i)
-			{
-				glm::vec3 c = shape[i].Center();
-				glm::vec3 dir = target_pos[i] - c;
-
-				if(glm::length(dir) > 0.001f)
-				{
-					for(int j = 0; j < shape[i].vertexData.size() / 3; ++j)
-					{
-						shape[i].vertexData[j * 3 + 0] += dir.x * speed;
-						shape[i].vertexData[j * 3 + 1] += dir.y * speed;
-						shape[i].vertexData[j * 3 + 2] += dir.z * speed;
-					}
-					all_done = false;
-				}
-			}
-
-			if(all_done)
-			{
-				// 위아래 이동 완료 후 교환 준비
-				move_updown = false;
-
-				// 교체 목표 위치 설정
-				glm::vec3 c0 = shape[0].Center();
-				glm::vec3 c1 = shape[1].Center();
-				glm::vec3 c2 = shape[2].Center();
-				glm::vec3 c3 = shape[3].Center();
-
-				target_pos[0] = c2;
-				target_pos[2] = c0;
-				target_pos[1] = c3;
-				target_pos[3] = c1;
-			}
-		} else
-		{
-			bool all_swapped = true;
-
-			for(int i = 0; i < 4; ++i)
-			{
-				glm::vec3 c = shape[i].Center();
-				glm::vec3 dir = original_pos[i] - c;
-
-				if(glm::length(dir) > 0.001f)
-				{
-					for(int j = 0; j < shape[i].vertexData.size() / 3; ++j)
-					{
-						shape[i].vertexData[j * 3 + 0] += dir.x * speed;
-						shape[i].vertexData[j * 3 + 1] += dir.y * speed;
-						shape[i].vertexData[j * 3 + 2] += dir.z * speed;
-					}
-					all_swapped = false;
-				}
-			}
-
-			if(all_swapped)
-			{
-				u = false;
-				move_updown = true;
-				initialized = false;
-			}
-		}
-	}
-}
-void Allmove(){
-	if(v){
-
-
-		for(int j = 0; j < 2; ++j){
-			float cx = 0,cy = 0,cz = 0;
-			for(int i = 0; i < shape[j].vertexData.size()/3; ++i) {
-				cx += shape[j].vertexData[i * 3 + 0];
-				cy += shape[j].vertexData[i * 3 + 1];
-				cz += shape[j].vertexData[i * 3 + 2];
-			}
-			cx /=shape[j].vertexData.size()/3;
-			cy /=shape[j].vertexData.size()/3;
-			cz /=shape[j].vertexData.size()/3;
-
-			for(int i = 0; i < shape[j].vertexData.size()/3; ++i) {
-				shape[j].RotateWorld(cx,cy,cz,glm::radians(x_rotate),i,1);
-				shape[j].Scale(cx,cy,cz,1.001f,i);
-			}
-		}
-		for(int i=0;i<shape[0].angle[1].size();++i)shape[0].angle[1][i] += y_rotate;
-		for(int i=0;i<shape[1].angle[1].size();++i)shape[1].angle[1][i] += y_rotate;
-
-
-		for(int j = 2; j < 4; ++j){
-			float cx = 0,cy = 0,cz = 0;
-			for(int i = 0; i < shape[j].vertexData.size()/3; ++i) {
-				cx += shape[j].vertexData[i * 3 + 0];
-				cy += shape[j].vertexData[i * 3 + 1];
-				cz += shape[j].vertexData[i * 3 + 2];
-			}
-			cx /=shape[j].vertexData.size()/3;
-			cy /=shape[j].vertexData.size()/3;
-			cz /=shape[j].vertexData.size()/3;
-
-			for(int i = 0; i < shape[j].vertexData.size()/3; ++i) {
-				shape[j].RotateWorld(cx,cy,cz,glm::radians(x_rotate),i,1);
-				shape[j].Scale(cx,cy,cz,0.999f,i);
-			}
-		}
-		for(int i=0;i<shape[2].angle[1].size();++i)shape[2].angle[1][i] += y_rotate;
-		for(int i=0;i<shape[3].angle[1].size();++i)shape[3].angle[1][i] += y_rotate;
-
-	}
-}
 void TimerFunction(int value)
 {
-	X_rotate();
-	Y_rotate();
-	Y_gong();
-	SizeUPDown();
-	SizeOne();
-	MoveX();
-	MoveY();
-	ChangeOne();
-	ChangeUpDown();
-	Allmove();
+	camera_move -= glm::vec3(ad_ * 0.5f,ws_ * 0.5f,pn_ * 0.5f);
+	for(int i=1;i<4;++i){
 
+		++shape[i].r;
+		glm::mat4 parentModelMat = glm::mat4(shape[0].modelMat);
+		//parentModelMat = glm::translate(parentModelMat,glm::vec3(0.0f,ws_*0.5f,0.0f));
+		if(i==1)
+			parentModelMat = glm::rotate(parentModelMat,glm::radians(shape[i].r),{0.0f,0.707f,-0.707f});
+		else if(i==2)
+			parentModelMat = glm::rotate(parentModelMat,glm::radians(shape[i].r),{0.0f,1.0f,0.0f});
+		else
+			parentModelMat = glm::rotate(parentModelMat,glm::radians(shape[i].r),{0.0f,0.707f,0.707f});
+		parentModelMat = glm::translate(parentModelMat,{shape[i].t*20,0.0f,0.0f});
+		parentModelMat = glm::scale(parentModelMat,{shape[i].s/shape[0].s,shape[i].s/shape[0].s,shape[i].s/shape[0].s});
+		shape[i].modelMat = parentModelMat;
+	}
+	for(int i = 4; i < 7; ++i){
+		++shape[i].r;
+		glm::mat4 childModelMat = shape[i-3].modelMat;
+		//childModelMat = glm::translate(childModelMat,glm::vec3(0.0f,ws_*0.5f,0.0f));
+		if(i==4)
+			childModelMat = glm::rotate(childModelMat,glm::radians(shape[i].r),{0.0f,0.707f,-0.707f});
+		else if(i==5)
+			childModelMat = glm::rotate(childModelMat,glm::radians(shape[i].r),{0.0f,1.0f,0.0f});
+		else
+			childModelMat = glm::rotate(childModelMat,glm::radians(shape[i].r),{0.0f,0.707f,0.707f});
+		//childModelMat = glm::rotate(childModelMat,glm::radians(shape[i].r),{0.0f,1.0f,0.0f});
+		childModelMat = glm::translate(childModelMat,{shape[i].t/shape[i-3].t,0.0f,0.0f});
+		childModelMat = glm::scale(childModelMat,{shape[i].s/shape[i-3].s,shape[i].s/shape[i-3].s,shape[i].s/shape[i-3].s});
+		shape[i].modelMat = childModelMat;
+	}
+
+	/*if(ws_!=0){
+		cameraPos += glm::normalize(-cameraPos) * 0.1f * (float)ws_;
+		ws_ = 0;
+
+	}*/
+
+	ws_ = 0;
+	ad_ = 0;
+	pn_ = 0;
 	glutTimerFunc(10,TimerFunction,1);
 	glutPostRedisplay();
 }
