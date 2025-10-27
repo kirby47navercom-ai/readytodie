@@ -385,6 +385,12 @@ int scale_time=0;
 int move_num=0;
 
 glm::vec3 center = {0.0f,0.0f,0.0f};
+glm::vec3 rotate1 =glm::vec3(0,0.707f,-0.707f);
+glm::vec3 rotate2 =glm::vec3(0,1.0f,0.0f);
+glm::vec3 rotate3 =glm::vec3(0,0.707f,0.707f);
+
+float _z=0.0f;
+int z_mode=0;
 
 void InitData(){
 	shape.clear();
@@ -620,7 +626,8 @@ void DrawScene() {
 
 	//--------------------------------------------------------------------------
 	// Camera (View) 및 Projection 매트릭스 설정
-	glm::mat4 view = glm::lookAt(cameraPos,glm::vec3(camera_move),glm::vec3(0.0f,1.0f,0.0f)); // 뷰 매트릭스
+	glm::vec3 camera_=cameraPos+camera_move;
+	glm::mat4 view = glm::lookAt(camera_,glm::vec3(camera_move),glm::vec3(0.0f,1.0f,0.0f)); // 뷰 매트릭스
 	glm::mat4 proj = glm::perspective(glm::radians(45.0f),(float)width / (float)height,0.1f,100.0f); // 프로젝션 매트릭스
 
 	glUniformMatrix4fv(viewLoc,1,GL_FALSE,glm::value_ptr(view));
@@ -647,13 +654,15 @@ void DrawScene() {
 	vector<glm::vec3> small_vertex3;
 	small_vertex3.push_back(shape[6].ToWorldPos(shape[6].Center()));
 
+
+
 	for(int i=1;i<90;++i){
-		big_vertex1.push_back(Rotate(big_vertex1[i-1],center,glm::radians(4.0f),glm::vec3(0,0.707f,-0.707f)));
-		big_vertex2.push_back(Rotate(big_vertex2[i-1],center,glm::radians(4.0f),glm::vec3(0,1.0f,0.0f)));
-		big_vertex3.push_back(Rotate(big_vertex3[i-1],center,glm::radians(4.0f),glm::vec3(0,0.707f,0.707f)));
-		small_vertex1.push_back(Rotate(small_vertex1[i-1],shape[1].ToWorldPos(shape[1].Center()),glm::radians(4.0f),glm::vec3(0,0.707f,-0.707f)));
-		small_vertex2.push_back(Rotate(small_vertex2[i-1],shape[2].ToWorldPos(shape[2].Center()),glm::radians(4.0f),glm::vec3(0,1.0f,0.0f)));
-		small_vertex3.push_back(Rotate(small_vertex3[i-1],shape[3].ToWorldPos(shape[3].Center()),glm::radians(4.0f),glm::vec3(0,0.707f,0.707f)));
+		big_vertex1.push_back(Rotate(big_vertex1[i-1],center,glm::radians(4.0f),rotate1));
+		big_vertex2.push_back(Rotate(big_vertex2[i-1],center,glm::radians(4.0f),rotate2));
+		big_vertex3.push_back(Rotate(big_vertex3[i-1],center,glm::radians(4.0f),rotate3));
+		small_vertex1.push_back(Rotate(small_vertex1[i-1],shape[1].ToWorldPos(shape[1].Center()),glm::radians(4.0f),rotate1));
+		small_vertex2.push_back(Rotate(small_vertex2[i-1],shape[2].ToWorldPos(shape[2].Center()),glm::radians(4.0f),rotate2));
+		small_vertex3.push_back(Rotate(small_vertex3[i-1],shape[3].ToWorldPos(shape[3].Center()),glm::radians(4.0f),rotate3));
 	}
 	all.insert(all.end(),big_vertex1.begin(),big_vertex1.end());
 	all.insert(all.end(),big_vertex2.begin(),big_vertex2.end());
@@ -675,6 +684,39 @@ void DrawScene() {
 		glDrawArrays(GL_POINTS,i,1);
 		//cout<< big_vertex1[i].x<<" "<< big_vertex1[i].y<<" "<< big_vertex1[i].z<<endl;
 	}
+
+	//---------------------------------------------------------------------------
+	// XYZ 축 
+	glUniformMatrix4fv(modelLoc,1,GL_FALSE,glm::value_ptr(axisModelMat));
+
+	std::vector<GLfloat> axesData = {
+		// X축
+		-5.0f,0.0f,0.0f,  // 시작
+		5.0f,0.0f,0.0f,  // 끝
+
+		// Y축
+		0.0f,-5.0f,0.0f,
+		0.0f,5.0f,0.0f,
+
+		// Z축
+		0.0f,0.0f,-5.0f,
+		0.0f,0.0f,5.0f
+	};
+
+	// 축용 VBO 업로드 (위치만, 색상 uniform 사용)
+	glBufferData(GL_ARRAY_BUFFER,axesData.size() * sizeof(GLfloat),axesData.data(),GL_DYNAMIC_DRAW);
+
+	// X축
+	glUniform3f(faceColorLoc,1.0f,0.0f,0.0f);
+	glDrawArrays(GL_LINES,0,2);
+
+	// Y축 
+	glUniform3f(faceColorLoc,0.0f,0.0f,1.0f);
+	glDrawArrays(GL_LINES,2,2);
+
+	// Z축 
+	glUniform3f(faceColorLoc,0.0f,1.0f,0.0f);
+	glDrawArrays(GL_LINES,4,2);
 
 	glBindVertexArray(0);
 	glutSwapBuffers();
@@ -729,6 +771,12 @@ void Keyboard(unsigned char key,int x,int y)
 		shape[i].t-=1.0f;
 	}
 	break;
+	case 'z':
+	z_mode = z_mode!=1?1:0;
+	break;
+	case 'Z':
+	z_mode = z_mode!=2?2:0;
+	break;
 	case 'k':
 	InitData();
 	shape_check = 0;
@@ -761,19 +809,44 @@ void SpecialKeyboard(int key,int x,int y)
 void TimerFunction(int value)
 {
 	camera_move -= glm::vec3(ad_ * 0.5f,ws_ * 0.5f,pn_ * 0.5f);
+	/*if(z_mode==1){
+		_z += 1.0f;
+		glm::mat4 zRotMat = glm::rotate(glm::mat4(1.0f),glm::radians(_z),glm::vec3(0,0,1));
+		rotate1 = glm::vec3(zRotMat * glm::vec4(glm::vec3(0,0.707f,-0.707f),0.0f));
+		rotate2 = glm::vec3(zRotMat * glm::vec4(glm::vec3(0,1.0f,0.0f),0.0f));
+		rotate3 = glm::vec3(zRotMat * glm::vec4(glm::vec3(0,0.707f,0.707f),0.0f));
+	} else if(z_mode==2){
+		_z -= 1.0f;
+		glm::mat4 zRotMat = glm::rotate(glm::mat4(1.0f),glm::radians(_z),glm::vec3(0,0,1));
+		rotate1 = glm::vec3(zRotMat * glm::vec4(glm::vec3(0,0.707f,-0.707f),0.0f));
+		rotate2 = glm::vec3(zRotMat * glm::vec4(glm::vec3(0,1.0f,0.0f),0.0f));
+		rotate3 = glm::vec3(zRotMat * glm::vec4(glm::vec3(0,0.707f,0.707f),0.0f));
+	}*/
+
+	glm::mat4 globalzRot = glm::mat4(1.0f);
+	if(z_mode == 1) {
+		_z += 1.0f;
+		globalzRot = glm::rotate(glm::mat4(1.0f),glm::radians(_z),glm::vec3(0,0,1));
+	} else if(z_mode == 2) {
+		_z -= 1.0f;
+		globalzRot = glm::rotate(glm::mat4(1.0f),glm::radians(_z),glm::vec3(0,0,1));
+	}
+
+	
+
 	for(int i=1;i<4;++i){
 
 		++shape[i].r;
-		glm::mat4 parentModelMat = glm::mat4(shape[0].modelMat);
+		glm::mat4 parentModelMat =  glm::mat4(1.0f);
 		//parentModelMat = glm::translate(parentModelMat,glm::vec3(0.0f,ws_*0.5f,0.0f));
 		if(i==1)
-			parentModelMat = glm::rotate(parentModelMat,glm::radians(shape[i].r),{0.0f,0.707f,-0.707f});
+			parentModelMat = glm::rotate(parentModelMat,glm::radians(shape[i].r),rotate1);
 		else if(i==2)
-			parentModelMat = glm::rotate(parentModelMat,glm::radians(shape[i].r),{0.0f,1.0f,0.0f});
+			parentModelMat = glm::rotate(parentModelMat,glm::radians(shape[i].r),rotate2);
 		else
-			parentModelMat = glm::rotate(parentModelMat,glm::radians(shape[i].r),{0.0f,0.707f,0.707f});
-		parentModelMat = glm::translate(parentModelMat,{shape[i].t*20,0.0f,0.0f});
-		parentModelMat = glm::scale(parentModelMat,{shape[i].s/shape[0].s,shape[i].s/shape[0].s,shape[i].s/shape[0].s});
+			parentModelMat = glm::rotate(parentModelMat,glm::radians(shape[i].r),rotate3);
+		parentModelMat = glm::translate(parentModelMat,{shape[i].t,0.0f,0.0f});
+		parentModelMat = glm::scale(parentModelMat,{shape[i].s,shape[i].s,shape[i].s});
 		shape[i].modelMat = parentModelMat;
 	}
 	for(int i = 4; i < 7; ++i){
@@ -781,17 +854,19 @@ void TimerFunction(int value)
 		glm::mat4 childModelMat = shape[i-3].modelMat;
 		//childModelMat = glm::translate(childModelMat,glm::vec3(0.0f,ws_*0.5f,0.0f));
 		if(i==4)
-			childModelMat = glm::rotate(childModelMat,glm::radians(shape[i].r),{0.0f,0.707f,-0.707f});
+			childModelMat = glm::rotate(childModelMat,glm::radians(shape[i].r),rotate1);
 		else if(i==5)
-			childModelMat = glm::rotate(childModelMat,glm::radians(shape[i].r),{0.0f,1.0f,0.0f});
+			childModelMat = glm::rotate(childModelMat,glm::radians(shape[i].r),rotate2);
 		else
-			childModelMat = glm::rotate(childModelMat,glm::radians(shape[i].r),{0.0f,0.707f,0.707f});
+			childModelMat = glm::rotate(childModelMat,glm::radians(shape[i].r),rotate3);
 		//childModelMat = glm::rotate(childModelMat,glm::radians(shape[i].r),{0.0f,1.0f,0.0f});
 		childModelMat = glm::translate(childModelMat,{shape[i].t/shape[i-3].t,0.0f,0.0f});
 		childModelMat = glm::scale(childModelMat,{shape[i].s/shape[i-3].s,shape[i].s/shape[i-3].s,shape[i].s/shape[i-3].s});
 		shape[i].modelMat = childModelMat;
 	}
-
+	for(int i = 1; i < shape.size(); ++i) {
+		shape[i].modelMat = globalzRot * shape[i].modelMat;
+	}
 	/*if(ws_!=0){
 		cameraPos += glm::normalize(-cameraPos) * 0.1f * (float)ws_;
 		ws_ = 0;
