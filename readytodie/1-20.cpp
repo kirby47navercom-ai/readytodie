@@ -371,7 +371,7 @@ bool silver=false;
 bool solid=false;
 
 glm::vec3 camera_move=glm::vec3(0.0f,0.0f,0.0f);
-
+glm::vec3 cameraTarget = glm::vec3(0.0f,0.0f,0.0f);  // 카메라가 바라보는 목표점
 float w1=0.0f;
 float w2=0.0f;
 int w=15;
@@ -631,7 +631,7 @@ void DrawScene() {
 	//--------------------------------------------------------------------------
 	// Camera (View) 및 Projection 매트릭스 설정
 	glm::vec3 camera_=cameraPos+camera_move;
-	glm::mat4 view = glm::lookAt(cameraPos,camera_move,glm::vec3(0.0f,1.0f,0.0f)); // 뷰 매트릭스
+	glm::mat4 view = glm::lookAt(camera_,cameraTarget,glm::vec3(0.0f,1.0f,0.0f)); // 뷰 매트릭스
 	glm::mat4 proj = glm::perspective(glm::radians(45.0f),(float)width / (float)height,0.1f,100.0f); // 프로젝션 매트릭스
 
 	glUniformMatrix4fv(viewLoc,1,GL_FALSE,glm::value_ptr(view));
@@ -724,16 +724,18 @@ void Keyboard(unsigned char key,int x,int y)
 	break;
 	case 'y':
 	{
+		glm::vec3 direction = cameraTarget - (cameraPos + camera_move);
 		glm::mat4 rot = glm::rotate(glm::mat4(1.0f),glm::radians(1.0f),{0.0f,1.0f,0.0f});
-		glm::mat4 pan = glm::translate(glm::mat4(1.0f),cameraPos)* rot* glm::translate(glm::mat4(1.0f),-cameraPos);
-		camera_move = glm::vec3(pan * glm::vec4(camera_move,1.0f));
+		direction = glm::vec3(rot * glm::vec4(direction,0.0f));
+		cameraTarget = (cameraPos + camera_move) + direction;
 	}
 	break;
 	case 'Y':
 	{
+		glm::vec3 direction = cameraTarget - (cameraPos + camera_move);
 		glm::mat4 rot = glm::rotate(glm::mat4(1.0f),glm::radians(-1.0f),{0.0f,1.0f,0.0f});
-		glm::mat4 pan = glm::translate(glm::mat4(1.0f),cameraPos)* rot* glm::translate(glm::mat4(1.0f),-cameraPos);
-		camera_move = glm::vec3(pan * glm::vec4(camera_move,1.0f));
+		direction = glm::vec3(rot * glm::vec4(direction,0.0f));
+		cameraTarget = (cameraPos + camera_move) + direction;
 	}
 	break;
 	case 'r':
