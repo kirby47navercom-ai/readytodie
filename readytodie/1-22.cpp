@@ -53,14 +53,14 @@ class Shape{
 public:
 	vector<GLfloat> vertexData;
 	vector<GLuint> indices;
-	float t=0.0f;
-	float s=0.0f;
-	float r=0.0f;
+	glm::vec3 t={0.0f,0.0f,0.0f};
+	glm::vec3 s={1.0f,1.0f,1.0f};
+	glm::vec3 r={0.0f,0.0f,0.0f};
 	glm::vec3 colors;
 	glm::mat4 modelMat = glm::mat4(1.0f);
-	glm::mat4 orimodelMat = glm::mat4(1.0f);
+	glm::vec3 orimodelMat = glm::vec3(0.0f);
 	int shape_num;
-	glm::vec3 angle;
+	float angle=0.0f;
 	Shape(Model model,int i){
 		vertexData.clear();
 		InitBuffer(model);
@@ -347,8 +347,10 @@ int facenum = -1;
 int modelType = 0; // 0: Cube, 1: Cone
 bool allFaceDraw = true; // true: 전체 면 그리기, false: 한 면씩 그리기
 
-glm::vec3 cameraPos = glm::vec3(5.0f,5.0f,5.0f);
-float cameraAngle = glm::atan(1.0f); // 초기 각도 (45도 라디안)
+//커비
+glm::vec3 cameraPos = glm::vec3(0.0f,0.0f,10.0f);
+float cameraAngleori=45.0f;
+float cameraAngle = glm::atan(glm::radians(cameraAngleori)); // 초기 각도 (45도 라디안)
 
 // 도형(모델) 이동 및 회전 관련 추가 전역 변수
 glm::vec3 modelPos = glm::vec3(0.0f,0.0f,0.0f);  // 도형 위치 (X, Y, Z 이동량)
@@ -359,24 +361,25 @@ int shape_check = 0;
 int ws_=0;
 int ad_=0;
 int pn_=0;
-bool t=false;
-bool u=false;
-bool v=false;
-bool c=false;
+int y_=0;
+int r_=0;
+int o=1;
+bool l=false;
+bool g=false;
+bool p=false;
 bool silver=false;
 bool solid=false;
 
 glm::vec3 camera_move=glm::vec3(0.0f,0.0f,0.0f);
 
+float w1=0.0f;
+float w2=0.0f;
+int w=15;
 
 float x_rotate=1.0f;
 float y_rotate=1.0f;
 float z_rotate=1.0f;
 
-glm::vec3 center1;
-glm::vec3 center2;
-glm::vec3 center3;
-glm::vec3 center4;
 
 
 float rotate_count=0.0f;
@@ -385,47 +388,123 @@ int scale_time=0;
 
 int move_num=0;
 
-glm::vec3 center = {0.0f,0.0f,0.0f};
-glm::vec3 rotate1 =glm::vec3(0,0.707f,-0.707f);
-glm::vec3 rotate2 =glm::vec3(0,1.0f,0.0f);
-glm::vec3 rotate3 =glm::vec3(0,0.707f,0.707f);
 
 float _z=0.0f;
 int z_mode=0;
 
+// 점프 관련 변수 수정 및 추가 (라인 290-296 부근) - 플랫폼 관련 변수 추가
+bool isJumping = false;
+float jumpVelocity = 0.0f;
+float jumpInitialVelocity = 0.05f;
+float gravity = -0.002f;
+float groundLevel = -1.7f;
+glm::vec3 jumpDirection = glm::vec3(0.0f);
+float speedMultiplier = 2.0f;
+
+// 플랫폼(밟을 수 있는 정육면체) 관련 변수 추가
+struct Platform {
+	glm::vec3 position;
+	glm::vec3 size;
+	float height;
+};
+vector<Platform> platforms;
+
+// 플랫폼 생성 함수 선언 추가 (함수 선언 부분에)
+void CreatePlatforms();
+bool CheckPlatformCollision(glm::vec3 characterPos,float characterY);
+
+//초기위치로 가는 요정 반디를 입력하세요
 void InitData(){
 	shape.clear();
-	shape.push_back(Shape(model[0],0));
-	shape.back().modelMat=glm::scale(shape.back().modelMat,{0.05f,0.05f,0.05f});
-	shape.back().s=0.05f;
-	int a[3]={-45,0,45};
-	for(size_t i=1;i<7;++i){
-		shape.push_back(Shape(model[1],i));// Shape 생성 시 model 정보 전달
-		if(i==0){
+	for(int i=0;i<6;++i){
+		shape.push_back(Shape(model[i+1],0));
+		shape[i].s={4.0f,4.0f,4.0f};
+	}
+	//머리
+	shape.push_back(Shape(model[0],1));
+	shape.back().t={0.0f,-0.5f,0.0f};
+	shape.back().s={0.3f,0.3f,0.3f};
 
-		}
-		else if(i<4){
-			shape[i].orimodelMat=glm::rotate(shape.back().orimodelMat,glm::radians((float)a[i-1]),{1.0f,0.0f,1.0f});
-			/*shape[i].orimodelMat=glm::translate(shape.back().orimodelMat,{3.0f,0.0f,0.0f});
-			shape[i].orimodelMat=glm::scale(shape.back().orimodelMat,{3.0f,3.0f,3.0f});*/
-			shape[i].s=3.0f;
-			shape[i].t=3.0f;
-			shape[i].r=(float)a[i-1];
-		}
-		else{
-			shape[i].orimodelMat=glm::translate(shape.back().orimodelMat,shape[i-3].ToWorldPos(shape[i-3].Center()));
-			shape[i].orimodelMat=glm::rotate(shape.back().orimodelMat,glm::radians((float)a[i-4]),{1.0f,0.0f,1.0f});
-			/*shape[i].orimodelMat=glm::translate(shape.back().orimodelMat,{0.5f,0.0f,0.0f});
-			shape[i].orimodelMat=glm::scale(shape.back().orimodelMat,{1.0f,1.0f,1.0f});*/
-			shape[i].t=0.5f;
-			shape[i].s=1.0f;
-			shape[i].r=(float)a[i-4];
+	//코
+	shape.push_back(Shape(model[0],1));
+	shape.back().t={0.0f,-0.5f,0.2f};
+	shape.back().s={0.1f,0.2f,0.1f};
+
+	//몸통
+	shape.push_back(Shape(model[0],1));
+	shape.back().t={0.0f,-1.0f,0.0f};
+	shape.back().s={0.6f,0.6f,0.6f};
+
+	//왼팔
+	shape.push_back(Shape(model[0],1));
+	shape.back().t={-0.4f,-1.0f,0.0f};
+	shape.back().s={0.15f,0.5f,0.15f};
+
+	//오른팔
+	shape.push_back(Shape(model[0],1));
+	shape.back().t={0.4f,-1.0f,0.0f};
+	shape.back().s={0.15f,0.5f,0.15f};
+
+	//왼다리
+	shape.push_back(Shape(model[0],1));
+	shape.back().t={-0.15f,-1.7f,0.0f};
+	shape.back().s={0.2f,0.7f,0.2f};
+
+	//오른다리
+	shape.push_back(Shape(model[0],1));
+	shape.back().t={0.15f,-1.7f,0.0f};
+	shape.back().s={0.2f,0.7f,0.2f};
+
+
+	// 플랫폼 생성
+	CreatePlatforms();
+
+
+
+}
+// 새로운 함수들 추가 (InitData 함수 뒤에)
+void CreatePlatforms() {
+	platforms.clear();
+
+	uniform_real_distribution<float> xDist(-1.5f,1.5f);
+	uniform_real_distribution<float> zDist(-1.5f,1.5f);
+
+	// 플랫폼 바닥이 땅 위에 오도록 수정
+	float platformY = groundLevel -0.3f; // 플랫폼 높이(0.5f)의 절반만큼 위로
+
+	for(int i = 0; i < 3; ++i) {
+		Platform platform;
+		platform.position = glm::vec3(xDist(gen),platformY,zDist(gen));
+		platform.size = glm::vec3(0.4f,0.5f,0.4f);
+		platform.height = 0.5f;
+		platforms.push_back(platform);
+
+		// 플랫폼 Shape 생성
+		shape.push_back(Shape(model[0],2));
+		shape.back().t = platform.position;
+		shape.back().s = platform.size;
+		shape.back().colors = glm::vec3(0.8f,0.6f,0.4f);
+	}
+}
+
+bool CheckPlatformCollision(glm::vec3 characterPos,float characterY) {
+	for(const auto& platform : platforms) {
+		// xz 평면 범위 체크
+		if(characterPos.x >= platform.position.x - platform.size.x/2 &&
+		   characterPos.x <= platform.position.x + platform.size.x/2 &&
+		   characterPos.z >= platform.position.z - platform.size.z/2 &&
+		   characterPos.z <= platform.position.z + platform.size.z/2) {
+
+			// 플랫폼 상단 표면 계산
+			float platformTop = platform.position.y + platform.size.y/2;
+
+			// 캐릭터 다리가 플랫폼 상단 표면에 닿았을 때만 true
+			if(characterY <= platformTop + 0.1f && characterY >= platformTop - 0.1f) {
+				return true;
+			}
 		}
 	}
-
-
-	
-
+	return false;
 }
 void Update(){
 	vector<GLfloat> vertexData;
@@ -467,8 +546,13 @@ int main(int argc,char** argv) {
 		std::cerr << "셰이더 프로그램 생성 실패" << std::endl;
 		return -1;
 	}
-	model.push_back(read_obj_file("reni.obj"));
-	model.push_back(read_obj_file("sphere.obj"));
+	model.push_back(read_obj_file("cube2.obj"));
+	model.push_back(read_obj_file("cube - front.obj"));
+	model.push_back(read_obj_file("cube - left.obj"));
+	model.push_back(read_obj_file("cube - right.obj"));
+	model.push_back(read_obj_file("cube - back.obj"));
+	model.push_back(read_obj_file("cube - top.obj"));
+	model.push_back(read_obj_file("cube - bottom.obj"));
 
 	InitBuffers();
 	InitData();
@@ -572,12 +656,13 @@ void InitBuffers() {
 
 void DrawScene() {
 	// 카메라 위치 업데이트
-	float r = glm::sqrt(cameraPos.x * cameraPos.x + cameraPos.z * cameraPos.z); // XZ 평면 거리
-	cameraPos.x = r * glm::cos(cameraAngle);
-	cameraPos.z = r * glm::sin(cameraAngle);
+	//float r = glm::sqrt(cameraPos.x * cameraPos.x + cameraPos.z * cameraPos.z); // XZ 평면 거리
+	//cameraPos.x = r * glm::cos(cameraAngle);
+	//cameraPos.z = r * glm::sin(cameraAngle);
 
 	glEnable(GL_DEPTH_TEST); // 깊이 테스트 활성화
 	glClearColor(0.5f,0.5f,0.5f,1.0f);
+
 	//if(silver)
 	//	glEnable(GL_CULL_FACE);// 은면 제거 활성화
 	//else
@@ -605,7 +690,7 @@ void DrawScene() {
 		glPolygonMode(GL_FRONT_AND_BACK,GL_LINE);
 
 
-		// Uniform 매트릭스 매핑
+	// Uniform 매트릭스 매핑
 	GLint modelLoc = glGetUniformLocation(shaderProgramID,"model");
 	GLint viewLoc = glGetUniformLocation(shaderProgramID,"view");
 	GLint projLoc = glGetUniformLocation(shaderProgramID,"proj");
@@ -613,7 +698,7 @@ void DrawScene() {
 
 
 	//--------------------------------------------------------------------------
-	
+
 
 	GLuint offset = 0;
 	for(int i=0;i<shape.size();++i){
@@ -628,7 +713,7 @@ void DrawScene() {
 	//--------------------------------------------------------------------------
 	// Camera (View) 및 Projection 매트릭스 설정
 	glm::vec3 camera_=cameraPos+camera_move;
-	glm::mat4 view = glm::lookAt(camera_,glm::vec3(camera_move),glm::vec3(0.0f,1.0f,0.0f)); // 뷰 매트릭스
+	glm::mat4 view = glm::lookAt(camera_,camera_move,glm::vec3(0.0f,1.0f,0.0f)); // 뷰 매트릭스
 	glm::mat4 proj = glm::perspective(glm::radians(45.0f),(float)width / (float)height,0.1f,100.0f); // 프로젝션 매트릭스
 
 	glUniformMatrix4fv(viewLoc,1,GL_FALSE,glm::value_ptr(view));
@@ -638,97 +723,6 @@ void DrawScene() {
 	glm::mat4 axisModelMat = glm::mat4(1.0f);
 	glUniformMatrix4fv(modelLoc,1,GL_FALSE,glm::value_ptr(axisModelMat));
 
-
-
-	vector<glm::vec3>all;
-	static bool b=false;
-	vector<glm::vec3> big_vertex1;
-	vector<glm::vec3> big_vertex2;
-	vector<glm::vec3> big_vertex3;
-	vector<glm::vec3> small_vertex1;
-	vector<glm::vec3> small_vertex2;
-	vector<glm::vec3> small_vertex3;
-
-	
-	big_vertex1.push_back(shape[1].ToWorldPos(shape[1].Center()));
-	big_vertex2.push_back(shape[2].ToWorldPos(shape[2].Center()));
-	big_vertex3.push_back(shape[3].ToWorldPos(shape[3].Center()));
-
-	for(int i=1; i<90; ++i){
-		glm::vec3 ori1 = glm::vec3(shape[1].modelMat * glm::vec4(0,1,0,0));  
-		glm::vec3 ori2 = glm::vec3(shape[2].modelMat * glm::vec4(0,1,0,0));
-		glm::vec3 ori3 = glm::vec3(shape[3].modelMat * glm::vec4(0,1,0,0));
-
-		big_vertex1.push_back(Rotate(big_vertex1[i-1],center,glm::radians(4.0f),ori1));
-		big_vertex2.push_back(Rotate(big_vertex2[i-1],center,glm::radians(4.0f),ori2));
-		big_vertex3.push_back(Rotate(big_vertex3[i-1],center,glm::radians(4.0f),ori3));
-	}
-
-	small_vertex1.push_back(shape[4].ToWorldPos(shape[4].Center()));
-	small_vertex2.push_back(shape[5].ToWorldPos(shape[5].Center()));
-	small_vertex3.push_back(shape[6].ToWorldPos(shape[6].Center()));
-
-	for(int i=1; i<90; ++i){
-		glm::vec3 ori1 = glm::vec3(shape[1].modelMat * glm::vec4(0,1,0,0));
-		glm::vec3 ori2 = glm::vec3(shape[2].modelMat * glm::vec4(0,1,0,0));
-		glm::vec3 ori3 = glm::vec3(shape[3].modelMat * glm::vec4(0,1,0,0));
-
-		small_vertex1.push_back(Rotate(small_vertex1[i-1],shape[1].ToWorldPos(shape[1].Center()),glm::radians(4.0f),ori1));
-		small_vertex2.push_back(Rotate(small_vertex2[i-1],shape[2].ToWorldPos(shape[2].Center()),glm::radians(4.0f),ori2));
-		small_vertex3.push_back(Rotate(small_vertex3[i-1],shape[3].ToWorldPos(shape[3].Center()),glm::radians(4.0f),ori3));
-	}
-
-
-	all.insert(all.end(),big_vertex1.begin(),big_vertex1.end());
-	all.insert(all.end(),big_vertex2.begin(),big_vertex2.end());
-	all.insert(all.end(),big_vertex3.begin(),big_vertex3.end());
-	all.insert(all.end(),small_vertex1.begin(),small_vertex1.end());
-	all.insert(all.end(),small_vertex2.begin(),small_vertex2.end());
-	all.insert(all.end(),small_vertex3.begin(),small_vertex3.end());
-
-	// 축용 VBO 업로드 (위치만, 색상 uniform 사용)
-	glBufferData(GL_ARRAY_BUFFER,all.size() * sizeof(glm::vec3),all.data(),GL_DYNAMIC_DRAW);
-
-	
-	glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,sizeof(glm::vec3),(void*)0);
-	glEnableVertexAttribArray(0);
-	
-	glPointSize(1.0f);
-	glUniform3f(faceColorLoc,1.0f,1.0f,1.0f);
-	glDrawArrays(GL_POINTS,0,all.size());
-
-	//---------------------------------------------------------------------------
-	// XYZ 축 
-	glUniformMatrix4fv(modelLoc,1,GL_FALSE,glm::value_ptr(axisModelMat));
-
-	std::vector<GLfloat> axesData = {
-		// X축
-		-5.0f,0.0f,0.0f,  // 시작
-		5.0f,0.0f,0.0f,  // 끝
-
-		// Y축
-		0.0f,-5.0f,0.0f,
-		0.0f,5.0f,0.0f,
-
-		// Z축
-		0.0f,0.0f,-5.0f,
-		0.0f,0.0f,5.0f
-	};
-
-	// 축용 VBO 업로드 (위치만, 색상 uniform 사용)
-	glBufferData(GL_ARRAY_BUFFER,axesData.size() * sizeof(GLfloat),axesData.data(),GL_DYNAMIC_DRAW);
-
-	// X축
-	glUniform3f(faceColorLoc,1.0f,0.0f,0.0f);
-	glDrawArrays(GL_LINES,0,2);
-
-	// Y축 
-	glUniform3f(faceColorLoc,0.0f,0.0f,1.0f);
-	glDrawArrays(GL_LINES,2,2);
-
-	// Z축 
-	glUniform3f(faceColorLoc,0.0f,1.0f,0.0f);
-	glDrawArrays(GL_LINES,4,2);
 
 	glBindVertexArray(0);
 	glutSwapBuffers();
@@ -744,69 +738,106 @@ void Reshape(int w,int h) {
 void Mouse(int button,int state,int x,int y) {
 
 }
-
+bool ani=false;
+int movemode=0;
+int oldmovemode=0;
+float speed=0.01f;
+float y_pivot=-1.7;
+float y_delta=0.0f;
 void Keyboard(unsigned char key,int x,int y)
 {
 	switch(key)
 	{
-	case 'p':
-	solid = !solid;
-	break;
-	case 'm':
-	silver = !silver;
-	break;
 	case 'w':
-	++ws_;
-	break;
-	case 's':
-	--ws_;
+	if(movemode!=1)movemode=1;
 	break;
 	case 'a':
-	--ad_;
+	if(movemode!=2)movemode=2;
+	break;
+	case 's':
+	if(movemode!=3)movemode=3;
 	break;
 	case 'd':
-	++ad_;
+	if(movemode!=4)movemode=4;
+	break;
+	case 'j':
+	// 점프 기능: 땅에 있을 때만 점프 가능, 스피드에 따른 대각선 점프
+	if(!isJumping) {
+		isJumping = true;
+		jumpVelocity = jumpInitialVelocity;
+
+		// 현재 이동 방향과 속도에 따라 점프 방향 계산
+		jumpDirection = glm::vec3(0.0f);
+
+		if(movemode == 1) {  // 앞으로 이동 중 (z-축 음의 방향)
+			jumpDirection.z = -speed * speedMultiplier;
+		} else if(movemode == 2) {  // 왼쪽으로 이동 중 (x-축 음의 방향)
+			jumpDirection.x = -speed * speedMultiplier;
+		} else if(movemode == 3) {  // 뒤로 이동 중 (z-축 양의 방향)
+			jumpDirection.z = speed * speedMultiplier;
+		} else if(movemode == 4) {  // 오른쪽으로 이동 중 (x-축 양의 방향)
+			jumpDirection.x = speed * speedMultiplier;
+		}
+		// movemode가 0이면 제자리 점프 (jumpDirection은 0,0,0)
+	}
 	break;
 	case '+':
-	++pn_;
+	speed+=0.01f;
 	break;
 	case '-':
+	speed-=0.01f;
+	if(speed < 0.0f) speed = 0.0f; // 음수 방지
+	break;
+	case 'o':
+	if(o==0)o=1;
+	break;
+	case 'O':
+	if(o==1)o=0;
+	break;
+	case 'z':
+	++pn_;
+	break;
+	case 'Z':
 	--pn_;
 	break;
+	case 'x':
+	++ad_;
+	break;
+	case 'X':
+	--ad_;
+	break;
 	case 'y':
-	for(int i=0;i<shape.size();++i){
-		shape[i].t+=1.0f;
+	{
+		glm::mat4 cameraori=glm::mat4(1.0f);
+		cameraori=glm::rotate(cameraori,glm::radians(1.0f),{0.0f,1.0f,0.0f});
+		cameraPos=glm::vec3(cameraori*glm::vec4(cameraPos,1.0f));
 	}
 	break;
 	case 'Y':
-	for(int i=0;i<shape.size();++i){
-		shape[i].t-=1.0f;
+	{
+		glm::mat4 cameraori=glm::mat4(1.0f);
+		cameraori=glm::rotate(cameraori,glm::radians(-1.0f),{0.0f,1.0f,0.0f});
+		cameraPos=glm::vec3(cameraori*glm::vec4(cameraPos,1.0f));
 	}
 	break;
-	case 'z':
-	z_mode = z_mode!=1?1:0;
-	break;
-	case 'Z':
-	z_mode = z_mode!=2?2:0;
-	break;
-	case 'k':
+	case 'c':
 	InitData();
-	shape_check = 0;
-	t=false;
-	u=false;
-	v=false;
-	c=false;
-	scale_time=0;
+	movemode=0;
+	oldmovemode=0;
+	speed=0.01f;
+	y_pivot=-1.7;
+	y_delta=0.0f;
+	camera_move =glm::vec3(0.0f,0.0f,0.0f);
+	cameraPos = glm::vec3(0.0f,0.0f,10.0f);
+	// 점프 상태 초기화
+	isJumping = false;
+	jumpVelocity = 0.0f;
+	jumpDirection = glm::vec3(0.0f);
 	break;
-
-
 	case 'q':
 	exit(0);
 	break;
-	default:
-	break;
 	}
-
 	glutPostRedisplay();
 }
 
@@ -821,35 +852,212 @@ void SpecialKeyboard(int key,int x,int y)
 void TimerFunction(int value)
 {
 	camera_move -= glm::vec3(ad_ * 0.5f,ws_ * 0.5f,pn_ * 0.5f);
-	if(z_mode == 2) _z -= 1.0f;
-	else if(z_mode==1)_z += 1.0f;
-	for(int i = 1; i < 4; ++i) {
-		shape[i].r += 1.0f;
-		glm::mat4 parentModelMat = glm::mat4(1.0f);
-		if(z_mode!=0)
-		parentModelMat = glm::rotate(parentModelMat,glm::radians(_z),glm::vec3(0.0f,0.0f,1.0f));
-		parentModelMat = glm::rotate(parentModelMat,glm::radians(shape[i].r),glm::vec3(0.0f,1.0f,0.0f));
-		parentModelMat = glm::translate(parentModelMat,{shape[i].t,0.0f,0.0f});
-		parentModelMat = glm::scale(parentModelMat,{shape[i].s,shape[i].s,shape[i].s});
-		shape[i].modelMat = shape[i].orimodelMat * parentModelMat;
+
+
+	if(oldmovemode!=movemode){
+		glm::vec3 center = shape[8].t;
+
+
+		float newAngle = 0.0f;
+		if(movemode==1) newAngle = 180.0f;
+		if(movemode==2) newAngle = -90.0f;
+		if(movemode==3) newAngle = 0.0f;
+		if(movemode==4) newAngle = 90.0f;
+
+		float angleDiff = newAngle - shape[8].angle;
+		shape[8].angle = newAngle;
+
+
+		for(int i=6; i<=12; ++i){
+			if(i != 8) {
+				glm::vec3 relativePos = shape[i].t - center;
+
+				glm::mat4 rotationMatrix = glm::mat4(1.0f);
+				rotationMatrix = glm::rotate(rotationMatrix,glm::radians(angleDiff),glm::vec3(0.0f,1.0f,0.0f));
+
+				glm::vec3 rotatedPos = glm::vec3(rotationMatrix * glm::vec4(relativePos,1.0f));
+				shape[i].t = center + rotatedPos;
+			}
+		}
+
+		oldmovemode = movemode;
 	}
 
-	for(int i = 4; i < 7; ++i) {
-		shape[i].r += 1.0f;
-		glm::mat4 childModelMat = glm::mat4(1.0f);
-		childModelMat = glm::rotate(childModelMat,glm::radians(shape[i].r),glm::vec3(0.0f,1.0f,0.0f));
-		childModelMat = glm::translate(childModelMat,{shape[i].t / shape[i - 3].t,0.0f,0.0f});
-		childModelMat = glm::scale(childModelMat,{shape[i].s / shape[i - 3].s,shape[i].s / shape[i - 3].s,shape[i].s / shape[i - 3].s});
-		shape[i].modelMat = shape[i - 3].modelMat * childModelMat * shape[i].orimodelMat;
+
+
+	// 점프 물리 처리 - 대각선 점프 포함
+	if(isJumping) {
+		// 모든 캐릭터 부품에 점프 속도 적용 (수직)
+		for(int i=6; i<=12; ++i) {
+			shape[i].t.y += jumpVelocity;
+			// 수평 이동 (대각선 점프)
+			shape[i].t.x += jumpDirection.x;
+			shape[i].t.z += jumpDirection.z;
+		}
+
+		// 중력 적용
+		jumpVelocity += gravity;
+
+		// 바닥이나 플랫폼에 닿으면 처리
+		glm::vec3 characterPos = shape[8].t; // 몸통 위치
+		bool onPlatform = CheckPlatformCollision(characterPos,shape[11].t.y);
+
+		if(onPlatform) {
+			// 플랫폼 상단 표면 위에 착지
+			for(int i=6; i<=12; ++i) {
+				float yOffset = 0.0f;
+				float baseLevel = groundLevel;
+
+				// 착지한 플랫폼의 상단 표면 y좌표 계산
+				for(const auto& platform : platforms) {
+					if(characterPos.x >= platform.position.x - platform.size.x/2 &&
+					   characterPos.x <= platform.position.x + platform.size.x/2 &&
+					   characterPos.z >= platform.position.z - platform.size.z/2 &&
+					   characterPos.z <= platform.position.z + platform.size.z/2) {
+						// 플랫폼 상단 표면 + 추가 높이를 baseLevel로 설정
+						baseLevel = platform.position.y + platform.size.y/2 + 0.25f;
+						break;
+					}
+				}
+
+				// 각 부품별 높이 오프셋 (플랫폼 상단 표면 기준)
+				if(i == 6) yOffset = 1.2f;       // 머리
+				else if(i == 7) yOffset = 1.2f;  // 코  
+				else if(i == 8) yOffset = 0.7f;  // 몸통
+				else if(i == 9 || i == 10) yOffset = 0.7f; // 팔
+				else if(i == 11 || i == 12) yOffset = 0.0f; // 다리 (상단 표면에 정확히 위치)
+
+				shape[i].t.y = baseLevel + yOffset;
+			}
+
+			jumpVelocity = 0.0f;
+		}
+		// 실제 바닥(땅)에 닿았을 때만 점프 완전 종료
+		else if(shape[11].t.y <= groundLevel) {
+			for(int i=6; i<=12; ++i) {
+				float yOffset = 0.0f;
+				if(i == 6) yOffset = 1.2f;
+				else if(i == 7) yOffset = 1.2f;
+				else if(i == 8) yOffset = 0.7f;
+				else if(i == 9 || i == 10) yOffset = 0.7f;
+				else if(i == 11 || i == 12) yOffset = 0.0f;
+				shape[i].t.y = groundLevel + yOffset;
+			}
+			// 땅에 닿았을 때만 점프 완전 종료
+			isJumping = false;
+			jumpVelocity = 0.0f;
+			jumpDirection = glm::vec3(0.0f);
+		}
+	}
+
+
+	for(size_t i=0;i<shape.size();++i){
+		glm::mat4 ori=glm::mat4(1.0f);
+
+		if(i==3){
+			if(o==0&&shape[i].t.y>0.0f)shape[i].t.y-=0.2f;
+			if(o==1&&shape[i].t.y<4.0f)shape[i].t.y+=0.2f;
+			ori=glm::translate(ori,shape[i].t);
+			ori=glm::scale(ori,shape[i].s);
+		} else if(i<6){
+			ori=glm::translate(ori,shape[i].t);
+			ori=glm::scale(ori,shape[i].s);
+		} else if(i<=12){
+			if(!isJumping) {  // 점프 중이 아닐 때만 이동
+				if(movemode==1)shape[i].t.z-=speed;
+				if(movemode==2)shape[i].t.x-=speed;
+				if(movemode==3)shape[i].t.z+=speed;
+				if(movemode==4)shape[i].t.x+=speed;
+			}
+			ori=glm::translate(ori,shape[i].t);
+			ori=glm::scale(ori,shape[i].s);
+		} else{
+			ori=glm::translate(ori,shape[i].t);
+			ori=glm::scale(ori,shape[i].s);
+		}
+		shape[i].modelMat=ori;
+	}
+
+
+	static float walkPhase = 0.0f; // 걷기 애니메이션 위상
+	float maxLegAngle = glm::clamp(600.0f * speed,10.0f,90.0f);
+	float maxArmAngle = glm::clamp(400.0f * speed,5.0f,60.0f);
+
+	if(movemode >= 1 && movemode <= 4 && !isJumping) {
+		walkPhase += speed * 120.0f;
+		if(walkPhase > 360.0f) walkPhase -= 360.0f;
+
+		float legAngle = maxLegAngle * sin(glm::radians(walkPhase));
+		float armAngle = maxArmAngle * sin(glm::radians(walkPhase + 180.0f));
+
+		glm::vec3 legAxis,armAxis;
+		if(movemode == 1 || movemode == 3) {
+			// 앞/뒤 이동: x축 기준으로 흔들림
+			legAxis = glm::vec3(1,0,0);
+			armAxis = glm::vec3(1,0,0);
+		} else {
+			// 좌/우 이동: z축 기준으로 흔들림
+			legAxis = glm::vec3(0,0,1);
+			armAxis = glm::vec3(0,0,1);
+		}
+
+		// 다리 회전
+		shape[11].modelMat = glm::mat4(1.0f);
+		shape[11].modelMat = glm::translate(shape[11].modelMat,shape[11].t);
+		shape[11].modelMat = glm::rotate(shape[11].modelMat,glm::radians(legAngle),legAxis);
+		shape[11].modelMat = glm::scale(shape[11].modelMat,shape[11].s);
+
+		shape[12].modelMat = glm::mat4(1.0f);
+		shape[12].modelMat = glm::translate(shape[12].modelMat,shape[12].t);
+		shape[12].modelMat = glm::rotate(shape[12].modelMat,glm::radians(-legAngle),legAxis);
+		shape[12].modelMat = glm::scale(shape[12].modelMat,shape[12].s);
+
+		// 팔 회전
+		shape[9].modelMat = glm::mat4(1.0f);
+		shape[9].modelMat = glm::translate(shape[9].modelMat,shape[9].t);
+		shape[9].modelMat = glm::rotate(shape[9].modelMat,glm::radians(armAngle),armAxis);
+		shape[9].modelMat = glm::scale(shape[9].modelMat,shape[9].s);
+
+		shape[10].modelMat = glm::mat4(1.0f);
+		shape[10].modelMat = glm::translate(shape[10].modelMat,shape[10].t);
+		shape[10].modelMat = glm::rotate(shape[10].modelMat,glm::radians(-armAngle),armAxis);
+		shape[10].modelMat = glm::scale(shape[10].modelMat,shape[10].s);
 	}
 
 
 
-	ws_ = ad_ = pn_ = 0;
-	glutTimerFunc(10,TimerFunction,1);
+	if(!isJumping) {
+		for(const auto& platform : platforms) {
+			// xz 평면에서 충돌 체크
+			if(shape[8].t.x >= platform.position.x - platform.size.x/2 &&
+			   shape[8].t.x <= platform.position.x + platform.size.x/2 &&
+			   shape[8].t.z >= platform.position.z - platform.size.z/2 &&
+			   shape[8].t.z <= platform.position.z + platform.size.z/2) {
+
+				// 방향 반전 (예시: 1<->3, 2<->4)
+				if(movemode == 1) movemode = 3;
+				else if(movemode == 3) movemode = 1;
+				else if(movemode == 2) movemode = 4;
+				else if(movemode == 4) movemode = 2;
+			}
+		}
+	}
+	if(movemode==1){
+		if(shape[8].t.z<-2.0f)movemode=3;
+	}
+	if(movemode==2){
+		if(shape[8].t.x<-2.0f)movemode=4;
+	}
+	if(movemode==3){
+		if(shape[8].t.z>2.0f)movemode=1;
+	}
+	if(movemode==4){
+		if(shape[8].t.x>2.0f)movemode=2;
+	}
+	ad_=ws_=pn_=0;
+	if(!ani)glutTimerFunc(10,TimerFunction,1);
 	glutPostRedisplay();
 }
-
 GLchar ch[256]{};
 GLchar* filetobuf(const char *file)
 {
@@ -905,7 +1113,7 @@ void make_fragmentShaders()
 	if(!result)
 	{
 		glGetShaderInfoLog (fragmentShader,512,NULL,errorLog);
-		std::cerr << "ERROR: frag_shader \n" << errorLog << std :: endl;
+		std::cerr << "ERROR: frag_shader \n" << errorLog << std::endl;
 		return;
 	}
 }
@@ -934,5 +1142,4 @@ GLuint make_shaderProgram()
 	//사용하기 직전에 호출할 수 있다
 	return shaderID;
 }
-
 

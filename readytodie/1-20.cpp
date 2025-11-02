@@ -53,14 +53,14 @@ class Shape{
 public:
 	vector<GLfloat> vertexData;
 	vector<GLuint> indices;
-	float t=0.0f;
-	float s=0.0f;
-	float r=0.0f;
+	glm::vec3 t={0.0f,0.0f,0.0f};
+	glm::vec3 s={1.0f,1.0f,1.0f};
+	glm::vec3 r={0.0f,0.0f,0.0f};
 	glm::vec3 colors;
 	glm::mat4 modelMat = glm::mat4(1.0f);
-	glm::mat4 orimodelMat = glm::mat4(1.0f);
+	glm::vec3 orimodelMat = glm::vec3(0.0f);
 	int shape_num;
-	glm::vec3 angle;
+	float angle=0.0f;
 	Shape(Model model,int i){
 		vertexData.clear();
 		InitBuffer(model);
@@ -347,8 +347,10 @@ int facenum = -1;
 int modelType = 0; // 0: Cube, 1: Cone
 bool allFaceDraw = true; // true: 전체 면 그리기, false: 한 면씩 그리기
 
+//커비
 glm::vec3 cameraPos = glm::vec3(5.0f,5.0f,5.0f);
-float cameraAngle = glm::atan(1.0f); // 초기 각도 (45도 라디안)
+float cameraAngleori=90.0f;
+float cameraAngle = glm::atan(glm::radians(cameraAngleori)); // 초기 각도 (45도 라디안)
 
 // 도형(모델) 이동 및 회전 관련 추가 전역 변수
 glm::vec3 modelPos = glm::vec3(0.0f,0.0f,0.0f);  // 도형 위치 (X, Y, Z 이동량)
@@ -359,15 +361,20 @@ int shape_check = 0;
 int ws_=0;
 int ad_=0;
 int pn_=0;
+int y_=0;
+int r_=0;
 bool t=false;
-bool u=false;
-bool v=false;
-bool c=false;
+bool l=false;
+bool g=false;
+bool p=false;
 bool silver=false;
 bool solid=false;
 
 glm::vec3 camera_move=glm::vec3(0.0f,0.0f,0.0f);
 
+float w1=0.0f;
+float w2=0.0f;
+int w=15;
 
 float x_rotate=1.0f;
 float y_rotate=1.0f;
@@ -393,38 +400,35 @@ glm::vec3 rotate3 =glm::vec3(0,0.707f,0.707f);
 float _z=0.0f;
 int z_mode=0;
 
+//커비
 void InitData(){
 	shape.clear();
-	shape.push_back(Shape(model[0],0));
-	shape.back().modelMat=glm::scale(shape.back().modelMat,{0.05f,0.05f,0.05f});
-	shape.back().s=0.05f;
-	int a[3]={-45,0,45};
-	for(size_t i=1;i<7;++i){
-		shape.push_back(Shape(model[1],i));// Shape 생성 시 model 정보 전달
+	for(size_t i=0;i<8;++i){
+		shape.push_back(Shape(model[0],i));// Shape 생성 시 model 정보 전달
 		if(i==0){
-
+			shape[i].s={2.0f,0.5f,1.0f};
+		}
+		else if(i==1){
+			shape[i].s={1.2f,0.4f,0.6f};
+			shape[i].t={0.5f,0.5f,0.25f};
 		}
 		else if(i<4){
-			shape[i].orimodelMat=glm::rotate(shape.back().orimodelMat,glm::radians((float)a[i-1]),{1.0f,0.0f,1.0f});
-			/*shape[i].orimodelMat=glm::translate(shape.back().orimodelMat,{3.0f,0.0f,0.0f});
-			shape[i].orimodelMat=glm::scale(shape.back().orimodelMat,{3.0f,3.0f,3.0f});*/
-			shape[i].s=3.0f;
-			shape[i].t=3.0f;
-			shape[i].r=(float)a[i-1];
+			shape[i].s={0.8f,0.5f,0.4f};
+			shape[i].t={(i-2)*1.5f,0.9f,0.35f};
+		}
+		else if(i<6){
+			shape[i].s={0.1f,0.1f,0.8f};
+			shape[i].t={i==4?0.4f:1.8f,1.1f,0.75f};
 		}
 		else{
-			shape[i].orimodelMat=glm::translate(shape.back().orimodelMat,shape[i-3].ToWorldPos(shape[i-3].Center()));
-			shape[i].orimodelMat=glm::rotate(shape.back().orimodelMat,glm::radians((float)a[i-4]),{1.0f,0.0f,1.0f});
-			/*shape[i].orimodelMat=glm::translate(shape.back().orimodelMat,{0.5f,0.0f,0.0f});
-			shape[i].orimodelMat=glm::scale(shape.back().orimodelMat,{1.0f,1.0f,1.0f});*/
-			shape[i].t=0.5f;
-			shape[i].s=1.0f;
-			shape[i].r=(float)a[i-4];
+			shape[i].s={0.15f,1.0f,0.15f};
+			shape[i].t={i==6?0.4f:1.8f,1.2f,0.5f};
 		}
+
 	}
 
 
-	
+
 
 }
 void Update(){
@@ -467,8 +471,7 @@ int main(int argc,char** argv) {
 		std::cerr << "셰이더 프로그램 생성 실패" << std::endl;
 		return -1;
 	}
-	model.push_back(read_obj_file("reni.obj"));
-	model.push_back(read_obj_file("sphere.obj"));
+	model.push_back(read_obj_file("cube.obj"));
 
 	InitBuffers();
 	InitData();
@@ -572,9 +575,9 @@ void InitBuffers() {
 
 void DrawScene() {
 	// 카메라 위치 업데이트
-	float r = glm::sqrt(cameraPos.x * cameraPos.x + cameraPos.z * cameraPos.z); // XZ 평면 거리
-	cameraPos.x = r * glm::cos(cameraAngle);
-	cameraPos.z = r * glm::sin(cameraAngle);
+	//float r = glm::sqrt(cameraPos.x * cameraPos.x + cameraPos.z * cameraPos.z); // XZ 평면 거리
+	//cameraPos.x = r * glm::cos(cameraAngle);
+	//cameraPos.z = r * glm::sin(cameraAngle);
 
 	glEnable(GL_DEPTH_TEST); // 깊이 테스트 활성화
 	glClearColor(0.5f,0.5f,0.5f,1.0f);
@@ -605,7 +608,7 @@ void DrawScene() {
 		glPolygonMode(GL_FRONT_AND_BACK,GL_LINE);
 
 
-		// Uniform 매트릭스 매핑
+	// Uniform 매트릭스 매핑
 	GLint modelLoc = glGetUniformLocation(shaderProgramID,"model");
 	GLint viewLoc = glGetUniformLocation(shaderProgramID,"view");
 	GLint projLoc = glGetUniformLocation(shaderProgramID,"proj");
@@ -613,7 +616,7 @@ void DrawScene() {
 
 
 	//--------------------------------------------------------------------------
-	
+
 
 	GLuint offset = 0;
 	for(int i=0;i<shape.size();++i){
@@ -628,7 +631,7 @@ void DrawScene() {
 	//--------------------------------------------------------------------------
 	// Camera (View) 및 Projection 매트릭스 설정
 	glm::vec3 camera_=cameraPos+camera_move;
-	glm::mat4 view = glm::lookAt(camera_,glm::vec3(camera_move),glm::vec3(0.0f,1.0f,0.0f)); // 뷰 매트릭스
+	glm::mat4 view = glm::lookAt(cameraPos,camera_move,glm::vec3(0.0f,1.0f,0.0f)); // 뷰 매트릭스
 	glm::mat4 proj = glm::perspective(glm::radians(45.0f),(float)width / (float)height,0.1f,100.0f); // 프로젝션 매트릭스
 
 	glUniformMatrix4fv(viewLoc,1,GL_FALSE,glm::value_ptr(view));
@@ -637,65 +640,6 @@ void DrawScene() {
 
 	glm::mat4 axisModelMat = glm::mat4(1.0f);
 	glUniformMatrix4fv(modelLoc,1,GL_FALSE,glm::value_ptr(axisModelMat));
-
-
-
-	vector<glm::vec3>all;
-	static bool b=false;
-	vector<glm::vec3> big_vertex1;
-	vector<glm::vec3> big_vertex2;
-	vector<glm::vec3> big_vertex3;
-	vector<glm::vec3> small_vertex1;
-	vector<glm::vec3> small_vertex2;
-	vector<glm::vec3> small_vertex3;
-
-	
-	big_vertex1.push_back(shape[1].ToWorldPos(shape[1].Center()));
-	big_vertex2.push_back(shape[2].ToWorldPos(shape[2].Center()));
-	big_vertex3.push_back(shape[3].ToWorldPos(shape[3].Center()));
-
-	for(int i=1; i<90; ++i){
-		glm::vec3 ori1 = glm::vec3(shape[1].modelMat * glm::vec4(0,1,0,0));  
-		glm::vec3 ori2 = glm::vec3(shape[2].modelMat * glm::vec4(0,1,0,0));
-		glm::vec3 ori3 = glm::vec3(shape[3].modelMat * glm::vec4(0,1,0,0));
-
-		big_vertex1.push_back(Rotate(big_vertex1[i-1],center,glm::radians(4.0f),ori1));
-		big_vertex2.push_back(Rotate(big_vertex2[i-1],center,glm::radians(4.0f),ori2));
-		big_vertex3.push_back(Rotate(big_vertex3[i-1],center,glm::radians(4.0f),ori3));
-	}
-
-	small_vertex1.push_back(shape[4].ToWorldPos(shape[4].Center()));
-	small_vertex2.push_back(shape[5].ToWorldPos(shape[5].Center()));
-	small_vertex3.push_back(shape[6].ToWorldPos(shape[6].Center()));
-
-	for(int i=1; i<90; ++i){
-		glm::vec3 ori1 = glm::vec3(shape[1].modelMat * glm::vec4(0,1,0,0));
-		glm::vec3 ori2 = glm::vec3(shape[2].modelMat * glm::vec4(0,1,0,0));
-		glm::vec3 ori3 = glm::vec3(shape[3].modelMat * glm::vec4(0,1,0,0));
-
-		small_vertex1.push_back(Rotate(small_vertex1[i-1],shape[1].ToWorldPos(shape[1].Center()),glm::radians(4.0f),ori1));
-		small_vertex2.push_back(Rotate(small_vertex2[i-1],shape[2].ToWorldPos(shape[2].Center()),glm::radians(4.0f),ori2));
-		small_vertex3.push_back(Rotate(small_vertex3[i-1],shape[3].ToWorldPos(shape[3].Center()),glm::radians(4.0f),ori3));
-	}
-
-
-	all.insert(all.end(),big_vertex1.begin(),big_vertex1.end());
-	all.insert(all.end(),big_vertex2.begin(),big_vertex2.end());
-	all.insert(all.end(),big_vertex3.begin(),big_vertex3.end());
-	all.insert(all.end(),small_vertex1.begin(),small_vertex1.end());
-	all.insert(all.end(),small_vertex2.begin(),small_vertex2.end());
-	all.insert(all.end(),small_vertex3.begin(),small_vertex3.end());
-
-	// 축용 VBO 업로드 (위치만, 색상 uniform 사용)
-	glBufferData(GL_ARRAY_BUFFER,all.size() * sizeof(glm::vec3),all.data(),GL_DYNAMIC_DRAW);
-
-	
-	glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,sizeof(glm::vec3),(void*)0);
-	glEnableVertexAttribArray(0);
-	
-	glPointSize(1.0f);
-	glUniform3f(faceColorLoc,1.0f,1.0f,1.0f);
-	glDrawArrays(GL_POINTS,0,all.size());
 
 	//---------------------------------------------------------------------------
 	// XYZ 축 
@@ -744,66 +688,84 @@ void Reshape(int w,int h) {
 void Mouse(int button,int state,int x,int y) {
 
 }
-
+bool ani=false;
 void Keyboard(unsigned char key,int x,int y)
 {
 	switch(key)
 	{
+	case 't':
+	t= !t;
+	break;
+	case 'l':
+	if(!l){
+		w1=shape[2].t.x;
+		w2=shape[3].t.x;
+		w=15;
+	}
+	l=true;
+	break;
+	case 'g':
+	g= !g;
+	break;
 	case 'p':
-	solid = !solid;
+	p= !p;
 	break;
-	case 'm':
-	silver = !silver;
-	break;
-	case 'w':
-	++ws_;
-	break;
-	case 's':
-	--ws_;
-	break;
-	case 'a':
-	--ad_;
-	break;
-	case 'd':
-	++ad_;
-	break;
-	case '+':
+	case 'z':
 	++pn_;
 	break;
-	case '-':
+	case 'Z':
 	--pn_;
 	break;
+	case 'x':
+	++ad_;
+	break;
+	case 'X':
+	--ad_;
+	break;
 	case 'y':
-	for(int i=0;i<shape.size();++i){
-		shape[i].t+=1.0f;
+	{
+		glm::mat4 rot = glm::rotate(glm::mat4(1.0f),glm::radians(1.0f),{0.0f,1.0f,0.0f});
+		glm::mat4 pan = glm::translate(glm::mat4(1.0f),cameraPos)* rot* glm::translate(glm::mat4(1.0f),-cameraPos);
+		camera_move = glm::vec3(pan * glm::vec4(camera_move,1.0f));
 	}
 	break;
 	case 'Y':
-	for(int i=0;i<shape.size();++i){
-		shape[i].t-=1.0f;
+	{
+		glm::mat4 rot = glm::rotate(glm::mat4(1.0f),glm::radians(-1.0f),{0.0f,1.0f,0.0f});
+		glm::mat4 pan = glm::translate(glm::mat4(1.0f),cameraPos)* rot* glm::translate(glm::mat4(1.0f),-cameraPos);
+		camera_move = glm::vec3(pan * glm::vec4(camera_move,1.0f));
 	}
 	break;
-	case 'z':
-	z_mode = z_mode!=1?1:0;
+	case 'r':
+	{
+		glm::mat4 cameraori=glm::mat4(1.0f);
+		cameraori=glm::rotate(cameraori,glm::radians(1.0f),{0.0f,1.0f,0.0f});
+		cameraPos=glm::vec3(cameraori*glm::vec4(cameraPos,1.0f));
+	}
 	break;
-	case 'Z':
-	z_mode = z_mode!=2?2:0;
+	case 'R':
+	{
+		glm::mat4 cameraori=glm::mat4(1.0f);
+		cameraori=glm::rotate(cameraori,glm::radians(-1.0f),{0.0f,1.0f,0.0f});
+		cameraPos=glm::vec3(cameraori*glm::vec4(cameraPos,1.0f));
+	}
 	break;
-	case 'k':
+	case 'a':
+	r_=r_!=1?1:0;
+	break;
+	case 'o':
+	ani=!ani;
+	if(!ani)
+		glutTimerFunc(10,TimerFunction,1);
+	break;
+	case 'c':
 	InitData();
-	shape_check = 0;
-	t=false;
-	u=false;
-	v=false;
-	c=false;
-	scale_time=0;
+	camera_move =glm::vec3(0.0f,0.0f,0.0f);
+	cameraPos = glm::vec3(5.0f,5.0f,5.0f);
 	break;
-
 
 	case 'q':
 	exit(0);
-	break;
-	default:
 	break;
 	}
 
@@ -813,40 +775,233 @@ void Keyboard(unsigned char key,int x,int y)
 // 특수 키(화살표) 처리 함수: 도형 회전
 void SpecialKeyboard(int key,int x,int y)
 {
-
-
+	switch(key)
+	{
+	case GLUT_KEY_UP:    
+	for(int i=0;i<shape.size();++i){
+		shape[i].t.z -= 0.1f;
+	}
+	break;
+	case GLUT_KEY_DOWN:  
+	for(int i=0;i<shape.size();++i){
+		shape[i].t.z += 0.1f;
+	}
+	break;
+	case GLUT_KEY_LEFT:  
+	for(int i=0;i<shape.size();++i){
+		shape[i].t.x -= 0.1f;
+	}
+	break;
+	case GLUT_KEY_RIGHT: 
+	for(int i=0;i<shape.size();++i){
+		shape[i].t.x += 0.1f;
+	}
+	break;
+	default:
+	break;
+	}
+	
 	glutPostRedisplay();  // 재렌더링 요청
 }
 
 void TimerFunction(int value)
 {
 	camera_move -= glm::vec3(ad_ * 0.5f,ws_ * 0.5f,pn_ * 0.5f);
-	if(z_mode == 2) _z -= 1.0f;
-	else if(z_mode==1)_z += 1.0f;
-	for(int i = 1; i < 4; ++i) {
-		shape[i].r += 1.0f;
-		glm::mat4 parentModelMat = glm::mat4(1.0f);
-		if(z_mode!=0)
-		parentModelMat = glm::rotate(parentModelMat,glm::radians(_z),glm::vec3(0.0f,0.0f,1.0f));
-		parentModelMat = glm::rotate(parentModelMat,glm::radians(shape[i].r),glm::vec3(0.0f,1.0f,0.0f));
-		parentModelMat = glm::translate(parentModelMat,{shape[i].t,0.0f,0.0f});
-		parentModelMat = glm::scale(parentModelMat,{shape[i].s,shape[i].s,shape[i].s});
-		shape[i].modelMat = shape[i].orimodelMat * parentModelMat;
+	for(size_t i=0;i<shape.size();++i){
+		glm::mat4 ori=glm::mat4(1.0f);
+		if(i==1){
+			if(t){
+				shape[i].angle+=1.0f;
+				ori=glm::translate(ori,{shape[i].t.x+shape[i].s.x/2,shape[i].t.y,shape[i].t.z+shape[i].s.z/2});
+				ori=glm::rotate(ori,glm::radians(shape[i].angle),{0.0f,1.0f,0.0f});
+				ori=glm::translate(ori,{-(shape[i].t.x+shape[i].s.x/2),-shape[i].t.y,-(shape[i].t.z+shape[i].s.z/2)});
+
+			}
+		}
+		if(i==2){
+			if(t){
+				ori=glm::translate(ori,{shape[1].t.x+shape[1].s.x/2,shape[1].t.y,shape[1].t.z+shape[1].s.z/2});
+				ori=glm::rotate(ori,glm::radians(shape[1].angle),{0.0f,1.0f,0.0f});
+				ori=glm::translate(ori,{-(shape[1].t.x+shape[1].s.x/2),-shape[1].t.y,-(shape[1].t.z+shape[1].s.z/2)});
+
+			}
+			if(l){
+				if(w1>w2){
+					ori=glm::translate(ori,{-0.1f,0.0f,0.0f});
+					shape[i].t.x-=0.1f;
+				} else{
+					ori=glm::translate(ori,{0.1f,0.0f,0.0f});
+					shape[i].t.x+=0.1f;
+				}
+				--w;
+
+				if(w==0) l=false;
+			}
+		}
+		if(i==3){
+			if(t){
+				ori=glm::translate(ori,{shape[1].t.x+shape[1].s.x/2,shape[1].t.y,shape[1].t.z+shape[1].s.z/2});
+				ori=glm::rotate(ori,glm::radians(shape[1].angle),{0.0f,1.0f,0.0f});
+				ori=glm::translate(ori,{-(shape[1].t.x+shape[1].s.x/2),-shape[1].t.y,-(shape[1].t.z+shape[1].s.z/2)});
+
+			}
+			if(l){
+	
+				if(w2>w1){
+					ori=glm::translate(ori,{-0.1f,0.0f,0.0f});
+					shape[i].t.x-=0.1f;
+				} else{
+					ori=glm::translate(ori,{0.1f,0.0f,0.0f});
+					shape[i].t.x+=0.1f;
+				}
+				
+			}
+		}
+		if(i==4){
+			if(t){
+				ori=glm::translate(ori,{shape[1].t.x+shape[1].s.x/2,shape[1].t.y,shape[1].t.z+shape[1].s.z/2});
+				ori=glm::rotate(ori,glm::radians(shape[1].angle),{0.0f,1.0f,0.0f});
+				ori=glm::translate(ori,{-(shape[1].t.x+shape[1].s.x/2),-shape[1].t.y,-(shape[1].t.z+shape[1].s.z/2)});
+
+			}
+			if(g){
+				shape[i].angle+=1.0f;
+				ori=glm::translate(ori,{shape[2].t.x+shape[2].s.x/2,shape[2].t.y,shape[2].t.z+shape[2].s.z/2});
+				ori=glm::rotate(ori,glm::radians(shape[4].angle),{0.0f,1.0f,0.0f});
+				ori=glm::translate(ori,{-(shape[2].t.x+shape[2].s.x/2),-shape[2].t.y,-(shape[2].t.z+shape[2].s.z/2)});
+
+			}
+			if(l){
+				if(w1>w2){
+					ori=glm::translate(ori,{-0.1f,0.0f,0.0f});
+					shape[i].t.x-=0.1f;
+				} else{
+					ori=glm::translate(ori,{0.1f,0.0f,0.0f});
+					shape[i].t.x+=0.1f;
+				}
+			}
+
+		}
+		if(i==5){
+			if(t){
+				ori=glm::translate(ori,{shape[1].t.x+shape[1].s.x/2,shape[1].t.y,shape[1].t.z+shape[1].s.z/2});
+				ori=glm::rotate(ori,glm::radians(shape[1].angle),{0.0f,1.0f,0.0f});
+				ori=glm::translate(ori,{-(shape[1].t.x+shape[1].s.x/2),-shape[1].t.y,-(shape[1].t.z+shape[1].s.z/2)});
+
+			}
+			if(g){
+				ori=glm::translate(ori,{shape[3].t.x+shape[3].s.x/2,shape[3].t.y,shape[3].t.z+shape[3].s.z/2});
+				ori=glm::rotate(ori,glm::radians(-shape[4].angle),{0.0f,1.0f,0.0f});
+				ori=glm::translate(ori,{-(shape[3].t.x+shape[3].s.x/2),-shape[3].t.y,-(shape[3].t.z+shape[3].s.z/2)});
+
+			}
+			if(l){
+
+				if(w2>w1){
+					ori=glm::translate(ori,{-0.1f,0.0f,0.0f});
+					shape[i].t.x-=0.1f;
+				} else{
+					ori=glm::translate(ori,{0.1f,0.0f,0.0f});
+					shape[i].t.x+=0.1f;
+				}
+
+			}
+		}
+		if(i==6){
+			if(t){
+				ori=glm::translate(ori,{shape[1].t.x+shape[1].s.x/2,shape[1].t.y,shape[1].t.z+shape[1].s.z/2});
+				ori=glm::rotate(ori,glm::radians(shape[1].angle),{0.0f,1.0f,0.0f});
+				ori=glm::translate(ori,{-(shape[1].t.x+shape[1].s.x/2),-shape[1].t.y,-(shape[1].t.z+shape[1].s.z/2)});
+
+			}
+			if(p){
+				shape[i].angle+=1.0f;
+				ori=glm::translate(ori,{shape[2].t.x+shape[2].s.x/2,shape[2].t.y,shape[2].t.z+shape[2].s.z/2});
+				ori=glm::rotate(ori,glm::radians(shape[6].angle),{1.0f,0.0f,0.0f});
+				ori=glm::translate(ori,{-(shape[2].t.x+shape[2].s.x/2),-shape[2].t.y,-(shape[2].t.z+shape[2].s.z/2)});
+
+			}
+			if(l){
+				if(w1>w2){
+					ori=glm::translate(ori,{-0.1f,0.0f,0.0f});
+					shape[i].t.x-=0.1f;
+				} else{
+					ori=glm::translate(ori,{0.1f,0.0f,0.0f});
+					shape[i].t.x+=0.1f;
+				}
+			}
+		}
+		if(i==7){
+			if(t){
+				ori=glm::translate(ori,{shape[1].t.x+shape[1].s.x/2,shape[1].t.y,shape[1].t.z+shape[1].s.z/2});
+				ori=glm::rotate(ori,glm::radians(shape[1].angle),{0.0f,1.0f,0.0f});
+				ori=glm::translate(ori,{-(shape[1].t.x+shape[1].s.x/2),-shape[1].t.y,-(shape[1].t.z+shape[1].s.z/2)});
+
+			}
+			if(p){
+				shape[i].angle+=1.0f;
+				ori=glm::translate(ori,{shape[3].t.x+shape[3].s.x/2,(shape[3].t.y+shape[3].s.y/2),shape[3].t.z+shape[3].s.z/2});
+				ori=glm::rotate(ori,glm::radians(-shape[6].angle),{1.0f,0.0f,0.0f});
+				ori=glm::translate(ori,{-(shape[3].t.x+shape[3].s.x/2),-(shape[3].t.y+shape[3].s.y/2),-(shape[3].t.z+shape[3].s.z/2)});
+
+			}
+			if(l){
+
+				if(w2>w1){
+					ori=glm::translate(ori,{-0.1f,0.0f,0.0f});
+					shape[i].t.x-=0.1f;
+				} else{
+					ori=glm::translate(ori,{0.1f,0.0f,0.0f});
+					shape[i].t.x+=0.1f;
+				}
+
+			}
+
+		}
+		/*if(((i==1)&&t)||(g&&(i==4||i==5))){
+			shape[i].angle+=90.0f;
+			ori=glm::rotate(ori,glm::radians(shape[i].angle),{0.0f,1.0f,0.0f});
+		}
+		if(p&&(i==6||i==7)){
+			shape[i].angle+=1.0f;
+			ori=glm::rotate(ori,glm::radians(shape[i].angle),{1.0f,0.0f,0.0f});
+		}
+		if(l){
+			if(i==2){
+				if(w1>w2){
+					ori=glm::translate(ori,{-0.1f,0.0f,0.0f});
+					shape[i].t.x-=0.1f;
+				} else{
+					ori=glm::translate(ori,{0.1f,0.0f,0.0f});
+					shape[i].t.x+=0.1f;
+				}
+				--w;
+			} else if(i==3){
+				if(w2>w1){
+					ori=glm::translate(ori,{-0.1f,0.0f,0.0f});
+					shape[i].t.x-=0.1f;
+				} else{
+					ori=glm::translate(ori,{0.1f,0.0f,0.0f});
+					shape[i].t.x+=0.1f;
+				}
+			}
+
+			if(w==0) l=false;
+		}*/
+		ori=glm::translate(ori,shape[i].t);
+		ori=glm::scale(ori,shape[i].s);
+		shape[i].modelMat=ori;
 	}
 
-	for(int i = 4; i < 7; ++i) {
-		shape[i].r += 1.0f;
-		glm::mat4 childModelMat = glm::mat4(1.0f);
-		childModelMat = glm::rotate(childModelMat,glm::radians(shape[i].r),glm::vec3(0.0f,1.0f,0.0f));
-		childModelMat = glm::translate(childModelMat,{shape[i].t / shape[i - 3].t,0.0f,0.0f});
-		childModelMat = glm::scale(childModelMat,{shape[i].s / shape[i - 3].s,shape[i].s / shape[i - 3].s,shape[i].s / shape[i - 3].s});
-		shape[i].modelMat = shape[i - 3].modelMat * childModelMat * shape[i].orimodelMat;
-	}
+	if(r_==1){
+		glm::mat4 cameraori=glm::mat4(1.0f);
+		cameraori=glm::rotate(cameraori,glm::radians(1.0f),{0.0f,1.0f,0.0f});
+		cameraPos=glm::vec3(cameraori*glm::vec4(cameraPos,1.0f));
+	} 
 
 
-
-	ws_ = ad_ = pn_ = 0;
-	glutTimerFunc(10,TimerFunction,1);
+	ad_=ws_=pn_=0;
+	if(!ani)glutTimerFunc(10,TimerFunction,1);
 	glutPostRedisplay();
 }
 
