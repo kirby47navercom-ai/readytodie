@@ -383,7 +383,14 @@ GLvoid Timer(int value) //--- 콜백 함수: 타이머 콜백 함수
 	static bool sphere_falling[5] = {true,false,true,false,true};
 	static bool sphere_moving_right[5] = {false,true,false,false,true};
 
-	float gravity = 0.01f; // 중력 가속도
+	// 구체들의 떨어짐 속도 변수 (부드럽게 보이도록 천천히)
+	static float sphere_fall_speed[5] = {0.003f,0.004f,0.005f,0.006f,0.007f}; // 각 구체별 떨어짐 속도 (천천히)
+	static float sphere_horizontal_speed[5] = {0.005f,0.006f,0.007f,0.008f,0.009f}; // 수평 이동 속도 (천천히)
+
+	// 구체가 상자 밖으로 나갔는지 추적하는 변수
+	static bool sphere_escaped[5] = {false,false,false,false,false};
+
+	float gravity = 0.003f; // 중력 가속도 (천천히)
 
 	for(int i = 0; i < shapes.size(); i++){
 		shapes[i].model = glm::mat4(1.0f);
@@ -460,14 +467,59 @@ GLvoid Timer(int value) //--- 콜백 함수: 타이머 콜백 함수
 
 			shapes[i].model = glm::rotate(shapes[i].model,glm::radians(rotation_angle),glm::vec3(0.0f,0.0f,1.0f));
 
-			if(open) {
-				// "o" 키가 눌린 상태에서는 중력만 적용 (아래로만 떨어짐)
-				if(sphere_y_offset[sphere_idx] > -(BOX_SIZE - SPHERE_SIZE)) {
-					sphere_y_offset[sphere_idx] -= gravity;
+			if(open && !sphere_escaped[sphere_idx]) {
+				// 상자가 열렸을 때만 이동 (이미 탈출한 구체는 움직이지 않음)
+
+				// 상자가 열리는 방향에 따라 수평 이동 방향 결정
+				float box_angle = fmod(rotation_angle,360.0f);
+				if(box_angle < 0) box_angle += 360.0f;
+
+				// 상자 열린 방향으로 구체들을 천천히 부드럽게 밀어냄
+				if(box_angle >= 315.0f || box_angle < 45.0f) {
+					// 앞쪽이 열림 - y 음의 방향으로 천천히 밀어냄
+					sphere_y_offset[sphere_idx] -= sphere_horizontal_speed[sphere_idx];
+					// 적당한 거리에서 멈춤 (화면에서 보이는 범위)
+					if(sphere_y_offset[sphere_idx] < -(BOX_SIZE * 2.5f)) {
+						sphere_y_offset[sphere_idx] = -(BOX_SIZE * 2.5f);
+						sphere_escaped[sphere_idx] = true;
+					}
+				} else if(box_angle >= 45.0f && box_angle < 135.0f) {
+					// 오른쪽이 열림 - x 양의 방향으로 천천히 밀어냄
+					sphere_x_offset[sphere_idx] += sphere_horizontal_speed[sphere_idx];
+					// 적당한 거리에서 멈춤 (화면에서 보이는 범위)
+					if(sphere_x_offset[sphere_idx] > (BOX_SIZE * 2.5f)) {
+						sphere_x_offset[sphere_idx] = (BOX_SIZE * 2.5f);
+						sphere_escaped[sphere_idx] = true;
+					}
+				} else if(box_angle >= 135.0f && box_angle < 225.0f) {
+					// 뒤쪽이 열림 - y 양의 방향으로 천천히 밀어냄
+					sphere_y_offset[sphere_idx] += sphere_horizontal_speed[sphere_idx];
+					// 적당한 거리에서 멈춤 (화면에서 보이는 범위)
+					if(sphere_y_offset[sphere_idx] > (BOX_SIZE * 2.5f)) {
+						sphere_y_offset[sphere_idx] = (BOX_SIZE * 2.5f);
+						sphere_escaped[sphere_idx] = true;
+					}
+				} else if(box_angle >= 225.0f && box_angle < 315.0f) {
+					// 왼쪽이 열림 - x 음의 방향으로 천천히 밀어냄
+					sphere_x_offset[sphere_idx] -= sphere_horizontal_speed[sphere_idx];
+					// 적당한 거리에서 멈춤 (화면에서 보이는 범위)
+					if(sphere_x_offset[sphere_idx] < -(BOX_SIZE * 2.5f)) {
+						sphere_x_offset[sphere_idx] = -(BOX_SIZE * 2.5f);
+						sphere_escaped[sphere_idx] = true;
+					}
 				}
-				// x축 이동은 중지
-			} else {
-				// 기존 이동 로직
+
+				// 중력 적용 (천천히 떨어짐)
+				sphere_y_offset[sphere_idx] -= sphere_fall_speed[sphere_idx];
+
+				// 바닥 제한 (화면에서 보이는 범위)
+				if(sphere_y_offset[sphere_idx] < -(BOX_SIZE * 4)) {
+					sphere_y_offset[sphere_idx] = -(BOX_SIZE * 4);
+					sphere_escaped[sphere_idx] = true;
+				}
+
+			} else if(!open && !sphere_escaped[sphere_idx]) {
+				// 기존 이동 로직 (상자가 닫혀있을 때만, 아직 탈출하지 않은 구체만)
 				if(sphere_falling[sphere_idx]) {
 					sphere_y_offset[sphere_idx] -= 0.00001f * (float)(sphere_idx * 1.5 + 2);
 				} else {
@@ -484,6 +536,7 @@ GLvoid Timer(int value) //--- 콜백 함수: 타이머 콜백 함수
 				if(sphere_x_offset[sphere_idx] >= BOX_SIZE - SPHERE_SIZE) sphere_moving_right[sphere_idx] = false;
 				else if(sphere_x_offset[sphere_idx] <= -(BOX_SIZE - SPHERE_SIZE)) sphere_moving_right[sphere_idx] = true;
 			}
+			// sphere_escaped[sphere_idx]가 true인 경우 아무것도 하지 않음 (제자리에서 멈춤)
 
 			shapes[i].model = glm::translate(shapes[i].model,glm::vec3(sphere_x_offset[sphere_idx],sphere_y_offset[sphere_idx],0.0f));
 			shapes[i].model = glm::scale(shapes[i].model,glm::vec3(SPHERE_SIZE));
@@ -492,6 +545,11 @@ GLvoid Timer(int value) //--- 콜백 함수: 타이머 콜백 함수
 	glutPostRedisplay(); // 다시 그리기 요청
 	glutTimerFunc(1000 / 60,Timer,1); //--- 타이머 콜백함수 지정 (60 FPS)
 }
+
+
+
+
+
 
 
 GLvoid Mouse(int button,int state,int x,int y) {
