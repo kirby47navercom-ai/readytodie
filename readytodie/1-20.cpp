@@ -764,6 +764,7 @@ void Keyboard(unsigned char key,int x,int y)
 	InitData();
 	camera_move =glm::vec3(0.0f,0.0f,0.0f);
 	cameraPos = glm::vec3(5.0f,5.0f,5.0f);
+	cameraTarget = glm::vec3(0.0f,0.0f,0.0f);
 	break;
 
 	case 'q':
@@ -808,7 +809,9 @@ void SpecialKeyboard(int key,int x,int y)
 
 void TimerFunction(int value)
 {
-	camera_move -= glm::vec3(ad_ * 0.5f,ws_ * 0.5f,pn_ * 0.5f);
+	glm::vec3 movement = glm::vec3(ad_ * 0.5f,ws_ * 0.5f,pn_ * 0.5f);
+	camera_move -= movement;
+	cameraTarget -= movement;
 	for(size_t i=0;i<shape.size();++i){
 		glm::mat4 ori=glm::mat4(1.0f);
 		if(i==1){
