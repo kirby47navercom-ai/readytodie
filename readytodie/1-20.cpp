@@ -774,7 +774,7 @@ void Keyboard(unsigned char key,int x,int y)
 
 	glutPostRedisplay();
 }
-//ㅇㅅㅇ
+//ㅇㅅㅇ 11/5
 // 특수 키(화살표) 처리 함수: 도형 회전
 void SpecialKeyboard(int key,int x,int y)
 {
