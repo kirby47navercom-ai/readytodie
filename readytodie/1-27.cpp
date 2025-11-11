@@ -512,7 +512,7 @@ void DrawScene() {
 
 
 	glm::vec3 lightPos={0.0f,0.0f,0.0f};
-	glm::mat4 lightModelMat =shape.back().modelMat;
+	glm::mat4 lightModelMat = shape.back().modelMat;
 	lightPos = glm::vec3(lightModelMat * glm::vec4(lightPos,1.0f));
 
 

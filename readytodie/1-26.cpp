@@ -493,10 +493,7 @@ void DrawScene() {
 
 
 	glm::vec3 lightPos={0.0f,0.0f,0.0f};
-	glm::mat4 lightModelMat = glm::mat4(1.0f);
-	lightModelMat = glm::rotate(lightModelMat,shape[3].angle,glm::vec3(0.0f,1.0f,0.0f));
-	lightModelMat = glm::translate(lightModelMat,shape[3].t);
-	lightModelMat = glm::scale(lightModelMat,shape[3].s);
+	glm::mat4 lightModelMat = shape.back().modelMat;
 	lightPos = glm::vec3(lightModelMat * glm::vec4(lightPos,1.0f));
 
 
