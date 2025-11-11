@@ -11,12 +11,13 @@ uniform mat4 model;
 uniform mat4 view;
 uniform mat4 proj;
 uniform vec3 faceColor;
+uniform mat3 modelNormal;
 
 
 void main() {
     gl_Position = proj * view * model * vec4(aPos, 1.0);
 	FragPos = vec3(model * vec4(aPos, 1.0));
-	Normal = vNormal;
+	Normal = modelNormal * vNormal;
 	outColor = faceColor;
 }
 

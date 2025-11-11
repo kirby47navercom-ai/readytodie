@@ -252,9 +252,6 @@ float modelRotY = 0.0f;  // Y축 회전 각도 (라디안)
 float modelRotX = 0.0f;  // X축 회전 각도 (라디안)
 
 int shape_check = 0;
-int ws_=0;
-int ad_=0;
-int pn_=0;
 bool r_=0;
 bool n=false;
 bool m=false;
@@ -263,28 +260,10 @@ bool silver=false;
 bool solid=false;
 
 glm::vec3 camera_move=glm::vec3(0.0f,0.0f,0.0f);
-
-float w1=0.0f;
-float w2=0.0f;
-int w=15;
-
-float x_rotate=1.0f;
-float y_rotate=1.0f;
-float z_rotate=1.0f;
-
-glm::vec3 center1;
-glm::vec3 center2;
-glm::vec3 center3;
-glm::vec3 center4;
+glm::vec3 light_color=glm::vec3(1.0f,1.0f,1.0f);
 
 
-float rotate_count=0.0f;
 
-int scale_time=0;
-
-int move_num=0;
-
-glm::vec3 center = {0.0f,0.0f,0.0f};
 
 
 float _z=0.0f;
@@ -293,10 +272,12 @@ int z_mode=0;
 //커비
 void InitData(){
 	shape.clear();
-	for(size_t i=0;i<2;++i){
-		shape.push_back(Shape(model[i],i));// Shape 생성 시 model 정보 전달
+	for(size_t i=0;i<3;++i){
+		shape.push_back(Shape(model[1],0));
+		shape.back().t={-2.0f*i,0.0f,-2.0f*i};
+
 	}
-	shape.push_back(Shape(model[0],0));
+	shape.push_back(Shape(model[0],1));
 	shape.back().s={0.5f,0.5f,0.5f};
 	shape.back().t={2.0f,0.0f,0.0f};
 
@@ -314,7 +295,7 @@ void Update(){
 			combinateData.push_back(shape[i].normalData[j*3+0]);
 			combinateData.push_back(shape[i].normalData[j*3+1]);
 			combinateData.push_back(shape[i].normalData[j*3+2]);
-			
+
 		}
 	}
 
@@ -343,7 +324,7 @@ int main(int argc,char** argv) {
 		return -1;
 	}
 	model.push_back(read_obj_file("cube.obj"));
-	model.push_back(read_obj_file("pyramid.obj"));
+	model.push_back(read_obj_file("sphere.obj"));
 
 	InitBuffers();
 	InitData();
@@ -432,7 +413,7 @@ void InitBuffers() {
 	glBindBuffer(GL_ARRAY_BUFFER,VBO);
 	glBufferData(GL_ARRAY_BUFFER,0,nullptr,GL_DYNAMIC_DRAW);
 
-	
+
 
 
 	glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,6 * sizeof(GLfloat),(void*)0);
@@ -489,62 +470,40 @@ void DrawScene() {
 	glUniformMatrix4fv(projLoc,1,GL_FALSE,glm::value_ptr(proj));
 	// 도형 그리기
 	GLuint offset = 0;
-	
-	for(int j = 0; j < shape[0].vertexData.size() / 9; ++j){
-		if(!n){
-			glUniformMatrix4fv(modelLoc,1,GL_FALSE,glm::value_ptr(shape[0].modelMat));
-			glUniformMatrix3fv(modelNormalLocation,1,GL_FALSE,glm::value_ptr(glm::mat3(glm::transpose(glm::inverse(shape[0].modelMat)))));
-			glUniform3f(faceColorLoc,shape[0].colors[0],shape[0].colors[1],shape[0].colors[2]);
+	for(int i=0;i<shape.size();++i){
+		for(int j = 0; j < shape[i].vertexData.size() / 9; ++j){
+
+			glUniformMatrix4fv(modelLoc,1,GL_FALSE,glm::value_ptr(shape[i].modelMat));
+			glUniformMatrix3fv(modelNormalLocation,1,GL_FALSE,glm::value_ptr(glm::mat3(glm::transpose(glm::inverse(shape[i].modelMat)))));
+			glUniform3f(faceColorLoc,shape[i].colors[0],shape[i].colors[1],shape[i].colors[2]);
 			glDrawArrays(GL_TRIANGLES,offset,3);
-
+			
+			offset += 3;
 		}
-		offset += 3;
 	}
 
-	for(int j = 0; j < shape[1].vertexData.size() / 9; ++j){
-		if(n){
-			glUniformMatrix4fv(modelLoc,1,GL_FALSE,glm::value_ptr(shape[1].modelMat));
-			glUniformMatrix3fv(modelNormalLocation,1,GL_FALSE,glm::value_ptr(glm::mat3(glm::transpose(glm::inverse(shape[1].modelMat)))));
-			glUniform3f(faceColorLoc,shape[1].colors[0],shape[1].colors[1],shape[1].colors[2]);
-			glDrawArrays(GL_TRIANGLES,offset,3);
-		}
-		offset += 3;
-	}
-
-	for(int j = 0; j < shape[2].vertexData.size() / 9; ++j){
-	
-		glUniformMatrix4fv(modelLoc,1,GL_FALSE,glm::value_ptr(shape[2].modelMat));
-		glUniformMatrix3fv(modelNormalLocation,1,GL_FALSE,glm::value_ptr(glm::mat3(glm::transpose(glm::inverse(shape[2].modelMat)))));
-		glUniform3f(faceColorLoc,shape[1].colors[0],shape[2].colors[1],shape[2].colors[2]);
-		glDrawArrays(GL_TRIANGLES,offset,3);
-	
-		offset += 3;
-	}
-	
 
 
 
 	GLint lightPosLocation = glGetUniformLocation(shaderProgramID,"lightPos"); //--- lightPos 값 전달: (0.0, 0.0, 5.0);
 	GLint lightColorLocation = glGetUniformLocation(shaderProgramID,"lightColor"); //--- lightColor 값 전달: (1.0, 1.0, 1.0) 백색
 	GLint viewPosLocation = glGetUniformLocation(shaderProgramID,"viewPos"); //--- viewPos 값 전달: 카메라 위치
-	
-	
+
+
 
 
 	glm::vec3 lightPos={0.0f,0.0f,0.0f};
 	glm::mat4 lightModelMat = glm::mat4(1.0f);
-	lightModelMat = glm::rotate(lightModelMat,shape[2].angle,glm::vec3(0.0f,1.0f,0.0f));
-	lightModelMat = glm::translate(lightModelMat,shape[2].t);
-	lightModelMat = glm::scale(lightModelMat,shape[2].s);
+	lightModelMat = glm::rotate(lightModelMat,shape[3].angle,glm::vec3(0.0f,1.0f,0.0f));
+	lightModelMat = glm::translate(lightModelMat,shape[3].t);
+	lightModelMat = glm::scale(lightModelMat,shape[3].s);
 	lightPos = glm::vec3(lightModelMat * glm::vec4(lightPos,1.0f));
 
 
 	glUniform3f (lightPosLocation,lightPos.x,lightPos.y,lightPos.z);
 
-	if(!m)
-		glUniform3f (lightColorLocation,1.0,1.0,1.0);
-	else
-		glUniform3f (lightColorLocation,0.0,0.0,0.0);
+
+	glUniform3f (lightColorLocation,light_color.x,light_color.y,light_color.z);
 
 	glUniform3f(viewPosLocation,cameraPos1.x,cameraPos1.y,cameraPos1.z);
 
@@ -574,23 +533,14 @@ void Keyboard(unsigned char key,int x,int y)
 {
 	switch(key)
 	{
-	case'n':
-	n=!n;
-	break;
-	case 'm':
-	m=!m;
-	break;
-	case 'y':
-	y_=!y_;
+	case 'c':
+	light_color=glm::vec3(rcolor(gen),rcolor(gen),rcolor(gen));
 	break;
 	case 'r':
-	r_ = !r_;
+	shape[3].angle += glm::radians(10.0f);
 	break;
-	case 'z':
-	shape[2].t.x += 0.1f;
-	break;
-	case 'Z':
-	shape[2].t.x -= 0.1f;
+	case 'R':
+	shape[3].angle -= glm::radians(10.0f);
 	break;
 	case 'q':
 	exit(0);
@@ -603,8 +553,8 @@ void Keyboard(unsigned char key,int x,int y)
 // 특수 키(화살표) 처리 함수: 도형 회전
 void SpecialKeyboard(int key,int x,int y)
 {
-	
-	
+
+
 
 	glutPostRedisplay();  // 재렌더링 요청
 }
@@ -614,15 +564,7 @@ void TimerFunction(int value)
 
 	for(int i=0;i<shape.size();++i){
 		glm::mat4 m(1.0f);
-		if(i!=2){
-			if(y_)
-			shape[i].angle += 0.01f;
-			m = glm::rotate(m,shape[i].angle,glm::vec3(0.0f,1.0f,0.0f));
-		}
-		else{
-			if(r_)shape[i].angle += 0.01f;
-			m = glm::rotate(m,shape[i].angle,glm::vec3(0.0f,1.0f,0.0f));
-		}
+		if(i==3)m = glm::rotate(m,shape[i].angle,{0.0,1.0,0.0});
 		m = glm::translate(m,shape[i].t);
 		m = glm::scale(m,shape[i].s);
 		shape[i].modelMat = m;
