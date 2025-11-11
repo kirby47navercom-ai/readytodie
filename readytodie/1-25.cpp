@@ -48,10 +48,12 @@ typedef struct {
 	size_t vertex_count;
 	Face* faces;
 	size_t face_count;
+	vector<glm::vec3> normals;
 } Model;
 class Shape{
 public:
 	vector<GLfloat> vertexData;
+	vector<GLfloat> normalData;
 	vector<GLuint> indices;
 	glm::vec3 t={0.0f,0.0f,0.0f};
 	glm::vec3 s={1.0f,1.0f,1.0f};
@@ -252,62 +254,85 @@ Model read_obj_file(const char* filename) {
 
 	// 임시 벡터를 사용하여 동적으로 정점 및 면 데이터를 저장합니다.
 	std::vector<Vertex> temp_vertices;
+	std::vector<glm::vec3> temp_normals;
 	std::vector<Face> temp_faces;
 
 	char line[365];
 	while(fgets(line,sizeof(line),file)) {
 		read_newline(line);
 
-		// v 라인 처리
+		// v 라인 처리 (정점)
 		if(line[0] == 'v' && line[1] == ' ') {
 			Vertex v;
 			if(sscanf_s(line + 2,"%f %f %f",&v.x,&v.y,&v.z) == 3) {
 				temp_vertices.push_back(v);
 			}
 		}
-		// f 라인 처리 - N각형을 삼각 분할(Triangulation)합니다.
+		// vn 라인 처리 (노멀 벡터)
+		else if(line[0] == 'v' && line[1] == 'n' && line[2] == ' ') {
+			glm::vec3 normal;
+			if(sscanf_s(line + 3,"%f %f %f",&normal.x,&normal.y,&normal.z) == 3) {
+				temp_normals.push_back(normal);
+			}
+		}
+		// f 라인 처리 - v//vn 형식 (f 1//2 7//2 5//2)
 		else if(line[0] == 'f' && line[1] == ' ') {
 			char face_str[365];
-			// 원본 라인을 훼손하지 않기 위해 복사 (strtok 사용을 위함)
-			// '제목 없음.obj' 파일이 'f v1 v2 v3 v4...' 형식이라고 가정합니다.
 			if(strlen(line + 2) >= sizeof(face_str)) {
-				// 버퍼 오버플로우 방지 (필요 시 더 큰 버퍼 사용)
 				continue;
 			}
 			strcpy_s(face_str,sizeof(face_str),line + 2);
 
 			// strtok를 사용하여 공백으로 분리된 각 정점 데이터를 가져옵니다.
 			char* token = strtok(face_str," ");
-			std::vector<unsigned int> face_indices; // 면을 이루는 정점 인덱스 저장
+			std::vector<unsigned int> face_indices; // 정점 인덱스
+			std::vector<unsigned int> normal_indices; // 노멀 인덱스
 
-			// 토큰(정점 인덱스)을 읽습니다.
+			// 토큰(정점/노멀 인덱스)을 읽습니다.
 			while(token != NULL) {
-				unsigned int v_idx;
+				unsigned int v_idx = 0,vn_idx = 0;
 
-				// v/vt/vn 형태일 경우, 첫 '/' 이전의 v만 파싱
+				// v//vn 형태 파싱
 				if(strchr(token,'/') != NULL) {
-					// v/vt/vn 형태일 경우, 첫 '/' 이전의 v만 파싱
-					if(sscanf_s(token,"%u",&v_idx) == 1) {
-						face_indices.push_back(v_idx - 1); // 1-based index를 0-based index로 변환
+					// v//vn 형식
+					if(sscanf_s(token,"%u//%u",&v_idx,&vn_idx) == 2) {
+						face_indices.push_back(v_idx - 1); // 1-based to 0-based
+						normal_indices.push_back(vn_idx - 1);
+					}
+					// v/vt/vn 형식도 처리 (만약을 위해)
+					else if(sscanf_s(token,"%u/%*u/%u",&v_idx,&vn_idx) == 2) {
+						face_indices.push_back(v_idx - 1);
+						normal_indices.push_back(vn_idx - 1);
+					}
+					// v만 있는 경우
+					else if(sscanf_s(token,"%u",&v_idx) == 1) {
+						face_indices.push_back(v_idx - 1);
+						normal_indices.push_back(0); // 기본 노멀
 					}
 				} else {
-					// v 형태일 경우, v만 파싱
+					// v만 있는 경우
 					if(sscanf_s(token,"%u",&v_idx) == 1) {
-						face_indices.push_back(v_idx - 1); // 1-based index를 0-based index로 변환
+						face_indices.push_back(v_idx - 1);
+						normal_indices.push_back(0); // 기본 노멀
 					}
 				}
 				token = strtok(NULL," ");
 			}
 
-			// N각형(N >= 3) 면을 삼각 분할(Fan Triangulation)하여 저장합니다.
+			// 삼각형만 처리 (N각형 삼각분할은 제거 - cube.obj는 모두 삼각형)
 			if(face_indices.size() >= 3) {
-				// 0번 인덱스를 중심으로 삼각형을 만듭니다. (0, 1, 2), (0, 2, 3), (0, 3, 4)...
-				for(size_t i = 1; i < face_indices.size() - 1; ++i) {
-					Face f;
-					f.v1 = face_indices[0]; // 중심점
-					f.v2 = face_indices[i];
-					f.v3 = face_indices[i + 1];
-					temp_faces.push_back(f);
+				// 첫 3개 정점으로 삼각형 생성
+				Face f;
+				f.v1 = face_indices[0];
+				f.v2 = face_indices[1];
+				f.v3 = face_indices[2];
+				temp_faces.push_back(f);
+
+				// 노멀도 face 순서대로 저장
+				if(normal_indices.size() >= 3) {
+					model.normals.push_back(temp_normals[normal_indices[0]]);
+					model.normals.push_back(temp_normals[normal_indices[1]]);
+					model.normals.push_back(temp_normals[normal_indices[2]]);
 				}
 			}
 		}
@@ -437,15 +462,10 @@ void Update(){
 		shape[i].Update(model[0]);
 		vertexData.insert(vertexData.end(),shape[i].vertexData.begin(),shape[i].vertexData.end());
 
-		// 인덱스 오프셋 보정 필요 (여러 모델 합칠 경우)
-		GLuint offset = i==0 ? 0 : (GLuint)(vertexData.size()/3 - shape[i].vertexData.size()/3);
-		for(auto idx: shape[i].indices) indices.push_back(idx + offset);
 	}
 
 	glBindBuffer(GL_ARRAY_BUFFER,VBO);
 	glBufferData(GL_ARRAY_BUFFER,vertexData.size()*sizeof(GLfloat),vertexData.data(),GL_DYNAMIC_DRAW);
-
-
 }
 int main(int argc,char** argv) {
 	srand(static_cast<unsigned>(time(0))); // 랜덤 시드 초기화
@@ -557,26 +577,22 @@ void InitBuffers() {
 	glBindBuffer(GL_ARRAY_BUFFER,VBO);
 	glBufferData(GL_ARRAY_BUFFER,0,nullptr,GL_DYNAMIC_DRAW);
 
+	
+
+
 	glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,3 * sizeof(GLfloat),(void*)0);
 	glEnableVertexAttribArray(0);
-
+	glVertexAttribPointer(2,3,GL_FLOAT,GL_FALSE,6 * sizeof(float),(void*)(3 * sizeof(float))); //--- 노말 속성
+	glEnableVertexAttribArray(1);
 
 
 	glBindVertexArray(0);
 }
 
 void DrawScene() {
-	// 카메라 위치 업데이트
-	//float r = glm::sqrt(cameraPos.x * cameraPos.x + cameraPos.z * cameraPos.z); // XZ 평면 거리
-	//cameraPos.x = r * glm::cos(cameraAngle);
-	//cameraPos.z = r * glm::sin(cameraAngle);
 
 	glEnable(GL_DEPTH_TEST); // 깊이 테스트 활성화
 	glClearColor(0.5f,0.5f,0.5f,1.0f);
-	//if(silver)
-	//	glEnable(GL_CULL_FACE);// 은면 제거 활성화
-	//else
-	//	glDisable(GL_CULL_FACE);
 
 
 	if(silver){
@@ -610,59 +626,34 @@ void DrawScene() {
 
 	//--------------------------------------------------------------------------
 
-	glViewport(0,0,width / 2,height);
-	{
-		glm::mat4 view = glm::lookAt(cameraPos1,camera_move,glm::vec3(0,1,0));
-		glm::mat4 proj = glm::perspective(glm::radians(45.0f),(float)(width/2)/height,0.1f,100.0f);
-		glUniformMatrix4fv(viewLoc,1,GL_FALSE,glm::value_ptr(view));
-		glUniformMatrix4fv(projLoc,1,GL_FALSE,glm::value_ptr(proj));
-		// 도형 그리기
-		GLuint offset = 0;
-		for(int i=0;i<shape.size();++i){
-			for(int j = 0; j < shape[i].vertexData.size() / 9; ++j){
-				glUniformMatrix4fv(modelLoc,1,GL_FALSE,glm::value_ptr(shape[i].modelMat));
-				glUniform3f(faceColorLoc,shape[i].colors[0],shape[i].colors[1],shape[i].colors[2]);
-				glDrawArrays(GL_TRIANGLES,offset,3);
-				offset += 3;
-			}
-		}
-		
-	}
-
-	glViewport(width/2,height/2,width/2,height/2);
-	{
-		glm::mat4 view = glm::lookAt(cameraPos2,camera_move,glm::vec3(0,0,-1));
-		glm::mat4 proj = glm::ortho(-5.0f,5.0f,-5.0f,5.0f,0.1f,20.0f);
-		glUniformMatrix4fv(viewLoc,1,GL_FALSE,glm::value_ptr(view));
-		glUniformMatrix4fv(projLoc,1,GL_FALSE,glm::value_ptr(proj));
-		GLuint offset = 0;
-		for(int i=0;i<shape.size();++i){
-			for(int j = 0; j < shape[i].vertexData.size() / 9; ++j){
-				glUniformMatrix4fv(modelLoc,1,GL_FALSE,glm::value_ptr(shape[i].modelMat));
-				glUniform3f(faceColorLoc,shape[i].colors[0],shape[i].colors[1],shape[i].colors[2]);
-				glDrawArrays(GL_TRIANGLES,offset,3);
-				offset += 3;
-			}
+	glm::mat4 view = glm::lookAt(cameraPos1,camera_move,glm::vec3(0,1,0));
+	glm::mat4 proj = glm::perspective(glm::radians(45.0f),(float)(width/2)/height,0.1f,100.0f);
+	glUniformMatrix4fv(viewLoc,1,GL_FALSE,glm::value_ptr(view));
+	glUniformMatrix4fv(projLoc,1,GL_FALSE,glm::value_ptr(proj));
+	// 도형 그리기
+	GLuint offset = 0;
+	for(int i=0;i<shape.size();++i){
+		for(int j = 0; j < shape[i].vertexData.size() / 9; ++j){
+			glUniformMatrix4fv(modelLoc,1,GL_FALSE,glm::value_ptr(shape[i].modelMat));
+			glUniform3f(faceColorLoc,shape[i].colors[0],shape[i].colors[1],shape[i].colors[2]);
+			glDrawArrays(GL_TRIANGLES,offset,3);
+			offset += 3;
 		}
 	}
 
 
-	glViewport(width/2,0,width/2,height/2);
-	{
-		glm::mat4 view = glm::lookAt(cameraPos3,camera_move,glm::vec3(0,1,0));
-		glm::mat4 proj = glm::ortho(-5.0f,5.0f,-5.0f,5.0f,0.1f,20.0f);
-		glUniformMatrix4fv(viewLoc,1,GL_FALSE,glm::value_ptr(view));
-		glUniformMatrix4fv(projLoc,1,GL_FALSE,glm::value_ptr(proj));
-		GLuint offset = 0;
-		for(int i=0;i<shape.size();++i){
-			for(int j = 0; j < shape[i].vertexData.size() / 9; ++j){
-				glUniformMatrix4fv(modelLoc,1,GL_FALSE,glm::value_ptr(shape[i].modelMat));
-				glUniform3f(faceColorLoc,shape[i].colors[0],shape[i].colors[1],shape[i].colors[2]);
-				glDrawArrays(GL_TRIANGLES,offset,3);
-				offset += 3;
-			}
-		}
-	}
+
+	GLint lightPosLocation = glGetUniformLocation(shaderProgramID,"lightPos"); //--- lightPos 값 전달: (0.0, 0.0, 5.0);
+	GLint lightColorLocation = glGetUniformLocation(shaderProgramID,"lightColor"); //--- lightColor 값 전달: (1.0, 1.0, 1.0) 백색
+	GLint viewPosLocation = glGetUniformLocation(shaderProgramID,"viewPos"); //--- viewPos 값 전달: 카메라 위치
+	GLint objColorLocation = glGetUniformLocation(shaderProgramID,"objectColor"); //--- object Color값 전달: (1.0, 0.5, 0.3)의 색
+
+
+	glUniform3f (lightPosLocation,0.0,0.0,5.0);
+	glUniform3f (lightColorLocation,1.0,1.0,1.0);
+	glUniform3f (objColorLocation,1.0,0.5,0.3);
+	glUniform3f(viewPosLocation,cameraPos1.x,cameraPos1.y,cameraPos1.z);
+
 
 
 

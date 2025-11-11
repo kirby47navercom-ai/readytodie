@@ -1,6 +1,28 @@
 //1-8
 #version 330 core
 layout(location = 0) in vec3 aPos;
+layout (location = 1) in vec3 vNormal;
+
+out vec3 FragPos; //--- 객체의 위치값을 프래그먼트 세이더로 보낸다.
+out vec3 Normal;
+
+out vec3 outColor;
+uniform mat4 model;
+uniform mat4 view;
+uniform mat4 proj;
+uniform vec3 faceColor;
+
+
+void main() {
+    gl_Position = proj * view * model * vec4(aPos, 1.0);
+	FragPos = vec3(model * vec4(aPos, 1.0));
+	Normal = vNormal;
+	outColor = faceColor;
+}
+
+/*
+#version 330 core
+layout(location = 0) in vec3 aPos;
 layout(location = 1) in vec3 inputColor;
 
 out vec3 outColor;
@@ -14,6 +36,7 @@ void main() {
     gl_Position = proj * view * model * vec4(aPos, 1.0);
 	outColor = faceColor;
 }
+*/
 /*
 //--- vertex shader: vertex.glsl 파일에 저장
 //--- in_Position: attribute index 0
