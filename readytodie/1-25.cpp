@@ -299,6 +299,12 @@ void InitData(){
 	shape.push_back(Shape(model[0],0));
 	shape.back().s={0.5f,0.5f,0.5f};
 	shape.back().t={2.0f,0.0f,0.0f};
+	for(size_t i=0;i<20;++i){
+		shape.push_back(Shape(model[2],i));
+		shape.back().t=shape[2].t;
+		shape.back().s={0.2f,0.2f,0.2f};
+		shape.back().angle=static_cast<float>(i)*18.0f;
+	}
 
 
 
@@ -344,6 +350,7 @@ int main(int argc,char** argv) {
 	}
 	model.push_back(read_obj_file("cube.obj"));
 	model.push_back(read_obj_file("pyramid.obj"));
+	model.push_back(read_obj_file("sphere.obj"));
 
 	InitBuffers();
 	InitData();
@@ -520,6 +527,19 @@ void DrawScene() {
 	
 		offset += 3;
 	}
+
+	for(int i=3;i<shape.size();++i){
+		for(int j = 0; j < shape[i].vertexData.size() / 9; ++j){
+
+			glUniformMatrix4fv(modelLoc,1,GL_FALSE,glm::value_ptr(shape[i].modelMat));
+			glUniformMatrix3fv(modelNormalLocation,1,GL_FALSE,glm::value_ptr(glm::mat3(glm::transpose(glm::inverse(shape[i].modelMat)))));
+			glUniform3f(faceColorLoc,shape[i].colors[0],shape[i].colors[1],shape[i].colors[2]);
+			glDrawArrays(GL_TRIANGLES,offset,3);
+
+			offset += 3;
+		}
+	}
+
 	
 
 
@@ -532,7 +552,7 @@ void DrawScene() {
 
 
 	glm::vec3 lightPos={0.0f,0.0f,0.0f};
-	glm::mat4 lightModelMat = shape.back().modelMat;
+	glm::mat4 lightModelMat = shape[2].modelMat;
 	lightPos = glm::vec3(lightModelMat * glm::vec4(lightPos,1.0f));
 
 
@@ -611,16 +631,22 @@ void TimerFunction(int value)
 
 	for(int i=0;i<shape.size();++i){
 		glm::mat4 m(1.0f);
-		if(i!=2){
+		if(i<2){
 			if(y_)
 			shape[i].angle += 0.01f;
 			m = glm::rotate(m,shape[i].angle,glm::vec3(0.0f,1.0f,0.0f));
 		}
-		else{
+		else if(i==2){
 			if(r_)shape[i].angle += 0.01f;
 			m = glm::rotate(m,shape[i].angle,glm::vec3(0.0f,1.0f,0.0f));
+		} 
+		else if(i>2){
+			m = glm::rotate(m,glm::radians(shape[i].angle),glm::vec3(0.0f,1.0f,0.0f));
 		}
-		m = glm::translate(m,shape[i].t);
+		if(i<3)
+			m = glm::translate(m,shape[i].t);
+		else 
+			m = glm::translate(m,shape[2].t);
 		m = glm::scale(m,shape[i].s);
 		shape[i].modelMat = m;
 	}
