@@ -10,6 +10,7 @@ uniform vec3 lightPos; //--- 조명의 위치
 uniform vec3 lightColor; //--- 조명의 색
 uniform vec3 viewPos; //--- 카메라 위치
 
+
 void main ()
 {
 	float ambientLight = 0.3; //--- 주변 조명 세기
