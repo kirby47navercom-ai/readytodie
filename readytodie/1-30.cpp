@@ -93,6 +93,7 @@ public:
 vector<Shape> shape;
 StaticModel* cubeModel = nullptr;
 StaticModel* pyramidModel = nullptr;
+StaticModel* planeModel = nullptr;
 
 // --- 초기화 함수 (OBJ 로드 및 인덱스 매핑) ---
 void InitData() {
@@ -101,6 +102,7 @@ void InitData() {
 	// 1. 모델 파일 로드
 	if(cubeModel == nullptr) cubeModel = new StaticModel("nanacube.obj");
 	if(pyramidModel == nullptr) pyramidModel = new StaticModel("nanapyramid.obj");
+	if(planeModel == nullptr) planeModel = new StaticModel("plane1.obj");
 
 	// shape 벡터를 11개(0~10)로 넉넉하게 확보 (님 코드 루프가 10까지 돌기 때문)
 	shape.reserve(11);
@@ -115,12 +117,12 @@ void InitData() {
 		glm::vec3 n = mesh.vertices[0].Normal;
 
 		// 법선 벡터로 방향 판단하여 님 코드 순서에 맞춤
-		if(n.z > 0.5f)       shape[0] = Shape(&mesh,0); // Front
-		else if(n.x < -0.5f) shape[1] = Shape(&mesh,1); // Left
-		else if(n.x > 0.5f)  shape[2] = Shape(&mesh,2); // Right
-		else if(n.z < -0.5f) shape[3] = Shape(&mesh,3); // Back
-		else if(n.y < -0.5f) shape[4] = Shape(&mesh,4); // Bottom
-		else if(n.y > 0.5f)  shape[5] = Shape(&mesh,5); // Top
+		if(n.z > 0.5f)       shape[0] = Shape(&mesh,0); 
+		else if(n.x < -0.5f) shape[1] = Shape(&mesh,1); 
+		else if(n.x > 0.5f)  shape[2] = Shape(&mesh,2); 
+		else if(n.z < -0.5f) shape[3] = Shape(&mesh,3); 
+		else if(n.y < -0.5f) shape[4] = Shape(&mesh,4); 
+		else if(n.y > 0.5f)  shape[5] = Shape(&mesh,5); 
 	}
 
 	// 3. 피라미드 매핑 (인덱스 6 ~ 9)
@@ -132,6 +134,11 @@ void InitData() {
 		shape[pyIndex] = Shape(&mesh,pyIndex);
 		pyIndex++;
 	}
+	// 4. 바닥면 매핑 (인덱스 10)
+	shape[10] = Shape(&planeModel->meshes[0],10);
+	shape[10].t.z = -5.0f;
+	shape[10].angle = 45.0f;
+
 }
 
 // --- Main ---
@@ -212,7 +219,7 @@ void DrawScene() {
 	// --------------------------------------------------------------------------
 	// [님 코드 그대로] change가 true일 때 -> 피라미드 (6~10) 그리기
 	// --------------------------------------------------------------------------
-	for(int i = 6; i <= 10; ++i) {
+	for(int i = 6; i <= 9; ++i) {
 		if(change) { // p키 눌렀을 때
 			if(shape[i].meshPtr != nullptr) {
 				glUniformMatrix4fv(modelLoc,1,GL_FALSE,glm::value_ptr(shape[i].modelMat));
@@ -220,6 +227,11 @@ void DrawScene() {
 			}
 		}
 	}
+
+
+	glUniformMatrix4fv(modelLoc,1,GL_FALSE,glm::value_ptr(shape[10].modelMat));
+	shape[10].Draw(shaderProgramID);
+
 
 	glutSwapBuffers();
 }
@@ -384,6 +396,10 @@ void TimerFunction(int value) {
 			m = glm::translate(m,{0.0f,-0.2f,-0.5f});
 			m = glm::rotate(m,glm::radians(shape[i].angle),{1.0f,0.0f,0.0f});
 			m = glm::translate(m,{0.0f,0.2f,0.5f});
+		}
+		if(i==10){
+			m = glm::translate(m,shape[i].t);
+			m = glm::rotate(m,glm::radians(shape[i].angle),{0.0f,1.0f,0.0f});
 		}
 		m = glm::scale(m,shape[i].s);
 		shape[i].modelMat = m;
