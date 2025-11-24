@@ -290,6 +290,7 @@ void TimerFunction(int value) {
 		glm::mat4 m(1.0f);
 		if(y_) y += 0.1f; // 회전 속도 조절
 
+		if(i!=10)
 		m = glm::rotate(m,glm::radians(y),{0.0f,1.0f,0.0f});
 
 		// 큐브 애니메이션 (0~5)
@@ -399,7 +400,7 @@ void TimerFunction(int value) {
 		}
 		if(i==10){
 			m = glm::translate(m,shape[i].t);
-			m = glm::rotate(m,glm::radians(shape[i].angle),{0.0f,1.0f,0.0f});
+			m = glm::rotate(m,glm::radians(45.0f),{0.0f,1.0f,0.0f});
 		}
 		m = glm::scale(m,shape[i].s);
 		shape[i].modelMat = m;
